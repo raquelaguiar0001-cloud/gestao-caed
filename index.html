@@ -2,108 +2,115 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Scanner CAEd Express | Raquel Aguiar</title>
-    <link rel="icon" href="https://fav.farm/📸" />
+    <title>Sincronizador CAEd | Raquel Aguiar</title>
+    <link rel="icon" href="https://fav.farm/📊" />
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .config-fixa { background: white; width: 100%; max-width: 450px; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 10px; z-index: 10; }
-        .area-captura { margin-top: 20px; text-align: center; width: 100%; max-width: 450px; }
-        .btn-foto { background: #007bff; color: white; border: none; padding: 20px; border-radius: 10px; font-size: 18px; width: 100%; cursor: pointer; font-weight: bold; }
-        .status-sync { font-size: 12px; color: #28a745; margin-top: 5px; display: none; }
-        .lista-alunos { width: 100%; max-width: 450px; margin-top: 20px; }
-        .item-aluno { background: white; padding: 10px; margin-bottom: 5px; border-radius: 5px; border-left: 5px solid #007bff; font-size: 14px; }
-        input, select { padding: 10px; margin: 5px 0; width: 100%; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .card { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .status-sync { font-size: 12px; font-weight: bold; padding: 5px; border-radius: 5px; margin-bottom: 10px; }
+        .online { background: #d4edda; color: #155724; }
+        input, select { padding: 12px; margin: 5px 0; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; }
+        .btn { background: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 16px; cursor: pointer; }
+        .item-aluno { background: white; padding: 10px; margin-top: 5px; border-radius: 5px; border-left: 5px solid #28a745; display: flex; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
-<div class="config-fixa">
+<div id="status" class="status-sync">Conectando ao Firebase...</div>
+
+<div class="card">
     <strong>⚙️ Configuração do Teste</strong>
-    <select id="turma"><option value="8ano">8º Ano</option><option value="9ano">9º Ano</option></select>
-    <input type="text" id="testeID" placeholder="Ex: Teste01">
-    <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Ex: ABCDE...)">
-    <p style="font-size: 11px; color: #666; margin: 5px 0 0 0;">O gabarito acima ficará fixo para todas as fotos.</p>
+    <select id="turma" onchange="atualizarEscuta()">
+        <option value="8ano">8º Ano</option>
+        <option value="9ano">9º Ano</option>
+    </select>
+    <input type="text" id="testeID" placeholder="Ex: Teste01" oninput="atualizarEscuta()">
+    <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (ABC...)">
 </div>
 
-<div class="area-captura">
-    <input type="text" id="nomeAluno" placeholder="Nome do Aluno(a)" style="margin-bottom: 10px; border: 2px solid #007bff;">
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processarFoto(event)">
-    <button class="btn-foto" onclick="document.getElementById('cameraInput').click()">📷 TIRAR FOTO E SALVAR</button>
-    <div id="syncMsg" class="status-sync">Sincronizando com o Notebook... ⏳</div>
+<div class="card">
+    <strong>📝 Lançar Aluno</strong>
+    <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
+    <input type="text" id="respostasAluno" placeholder="Respostas (Ex: ABCD...)">
+    <button class="btn" onclick="salvarNoFirebase()">Salvar e Sincronizar</button>
 </div>
 
-<div class="lista-alunos" id="lista">
-    <h4>Sincronizados em tempo real:</h4>
-    </div>
+<div style="width: 100%; max-width: 500px;">
+    <h4>Resultados Sincronizados (Notebook/Celular):</h4>
+    <div id="listaResultados"></div>
+</div>
 
 <script>
-    // Configuração oficial do seu banco na Europa
+    // Sua URL oficial na Europa
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function processarFoto(event) {
-        const nome = document.getElementById('nomeAluno').value;
-        const gabarito = document.getElementById('gabaritoOficial').value;
+    // Verifica se está online
+    db.ref('.info/connected').on('value', (snap) => {
+        const status = document.getElementById('status');
+        if (snap.val() === true) {
+            status.innerText = "Sincronização Ativa ✅";
+            status.className = "status-sync online";
+        } else {
+            status.innerText = "Offline - Verifique a Internet ❌";
+            status.className = "status-sync";
+        }
+    });
+
+    function salvarNoFirebase() {
         const turma = document.getElementById('turma').value;
         const teste = document.getElementById('testeID').value || "Geral";
+        const nome = document.getElementById('nomeAluno').value;
+        const oficial = document.getElementById('gabaritoOficial').value.toUpperCase();
+        const alunoResp = document.getElementById('respostasAluno').value.toUpperCase();
 
-        if (!nome) {
-            alert("Por favor, digite o nome do aluno antes de tirar a foto.");
-            return;
+        if (!nome || !oficial || !alunoResp) return alert("Preencha todos os campos!");
+
+        let acertos = 0;
+        for (let i = 0; i < oficial.length; i++) {
+            if (alunoResp[i] === oficial[i]) acertos++;
         }
 
-        document.getElementById('syncMsg').style.display = "block";
-
-        const file = event.target.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            const fotoBase64 = e.target.result;
-
-            // Envia para o Firebase
-            const novoRegistro = db.ref(`escola/${turma}/${teste}`).push();
-            novoRegistro.set({
-                aluno: nome,
-                data: 20260218, // Formato numérico solicitado
-                gabaritoOficial: gabarito,
-                foto: "Salva com sucesso", // Para não carregar demais o banco, salvamos o log
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }, (error) => {
-                if (!error) {
-                    document.getElementById('syncMsg').innerText = "✅ Sincronizado!";
-                    adicionarNaLista(nome);
-                    document.getElementById('nomeAluno').value = ""; // Limpa para o próximo
-                    setTimeout(() => { document.getElementById('syncMsg').style.display = "none"; document.getElementById('syncMsg').innerText = "Sincronizando... ⏳"; }, 2000);
-                }
-            });
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // Escuta o banco de dados para atualizar a lista no notebook ao mesmo tempo
-    function configurarEscutaRealtime() {
-        const turma = document.getElementById('turma').value;
-        const teste = document.getElementById('testeID').value || "Geral";
-        
-        db.ref(`escola/${turma}/${teste}`).on('child_added', (snapshot) => {
-            const d = snapshot.val();
-            adicionarNaLista(d.aluno);
+        const ref = db.ref(`escola/${turma}/${teste}`);
+        ref.push({
+            aluno: nome,
+            acertos: acertos,
+            total: oficial.length,
+            data: 20260218
+        }).then(() => {
+            document.getElementById('nomeAluno').value = "";
+            document.getElementById('respostasAluno').value = "";
         });
     }
 
-    function adicionarNaLista(nome) {
-        const lista = document.getElementById('lista');
-        const item = document.createElement('div');
-        item.className = 'item-aluno';
-        item.innerHTML = `<strong>${nome}</strong> - 🟢 Recebido no Notebook`;
-        lista.prepend(item);
+    let escutaAtiva = null;
+    function atualizarEscuta() {
+        const turma = document.getElementById('turma').value;
+        const teste = document.getElementById('testeID').value || "Geral";
+        const lista = document.getElementById('listaResultados');
+
+        // Remove a escuta antiga para não duplicar
+        if (escutaAtiva) escutaAtiva.off();
+
+        // Cria nova escuta em tempo real
+        escutaAtiva = db.ref(`escola/${turma}/${teste}`);
+        escutaAtiva.on('value', (snapshot) => {
+            lista.innerHTML = ""; // Limpa para atualizar
+            snapshot.forEach((child) => {
+                const d = child.val();
+                const item = document.createElement('div');
+                item.className = 'item-aluno';
+                item.innerHTML = `<span>${d.aluno}</span> <strong>${d.acertos}/${d.total}</strong>`;
+                lista.prepend(item);
+            });
+        });
     }
-    
-    // Inicia a escuta para o notebook ver os dados caindo
-    configurarEscutaRealtime();
+
+    // Inicia a escuta ao abrir
+    atualizarEscuta();
 </script>
 </body>
 </html>

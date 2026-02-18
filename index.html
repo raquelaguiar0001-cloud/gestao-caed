@@ -2,54 +2,63 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema CAEd | Raquel Aguiar</title>
+    <title>Analítico CAEd | Raquel Aguiar</title>
     <link rel="icon" href="https://fav.farm/📊" />
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .status-sync { background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; width: 100%; text-align: center; font-weight: bold; margin-bottom: 10px; }
-        .resultado-item { background: white; padding: 15px; margin-top: 10px; border-radius: 10px; border-left: 6px solid #007bff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .nota-badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
+        .card { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .diagnostico { background: #fff3cd; border-left: 6px solid #ffc107; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .habilidade-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
+        .barra-progresso { background: #eee; height: 10px; border-radius: 5px; width: 100%; margin-top: 5px; overflow: hidden; }
+        .progresso-preenchido { background: #dc3545; height: 100%; transition: 0.5s; }
         input, select { padding: 12px; margin: 5px 0; width: 100%; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-foto { background: #28a745; color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
-        .btn-foto:active { transform: scale(0.98); background: #218838; }
+        .btn-foto { background: #28a745; color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="status" class="status-sync">Sincronização Ativa ✅</div>
-
 <div class="card">
-    <strong>⚙️ Configuração Fixa (8º e 9º Ano)</strong>
+    <strong>⚙️ Configuração e Gabarito</strong>
     <select id="turma" onchange="salvarEAtualizar()"><option value="8ano">8º Ano</option><option value="9ano">9º Ano</option></select>
-    <input type="text" id="testeID" placeholder="Nome do Teste (Ex: Teste 01)" oninput="salvarEAtualizar()">
-    <input type="text" id="gabaritoOficial" placeholder="Gabarito (Ex: ABCD...)" oninput="salvarEAtualizar()" style="font-weight: bold; letter-spacing: 1px;">
+    <input type="text" id="testeID" placeholder="Nome do Teste" oninput="salvarEAtualizar()">
+    <input type="text" id="gabaritoOficial" placeholder="Gabarito (Ex: ABCD...)" oninput="salvarEAtualizar()">
 </div>
 
 <div class="card">
-    <strong>📸 Scanner de Gabarito</strong>
+    <strong>📸 Captura Rápida</strong>
     <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processarEEnviar(event)">
-    <button class="btn-foto" onclick="document.getElementById('cameraInput').click()">📷 TIRAR FOTO E CALCULAR NOTA</button>
+    <button class="btn-foto" onclick="document.getElementById('cameraInput').click()">📷 TIRAR FOTO E ANALISAR</button>
 </div>
 
-<div id="painelNotebook" style="width: 100%; max-width: 500px;">
-    <h4>📊 Resultados e Desempenho (Tempo Real):</h4>
-    <div id="listaResultados"></div>
+<div class="card">
+    <h4>💡 Diagnóstico da Turma (Habilidades)</h4>
+    <div id="painelHabilidades">
+        <p style="color: #666;">Aguardando dados para analisar...</p>
+    </div>
 </div>
+
+<div id="listaResultados" style="width: 100%; max-width: 600px;">
+    </div>
 
 <script>
-    // Configuração oficial para o seu banco na Europa
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Carrega dados salvos no navegador ao abrir
+    // Mapeamento baseado nas suas fotos
+    const matrizHabilidades = {
+        "D041_CN": "Geração de Energia (Questões 1, 2, 6, 8, 9, 10, 11)",
+        "D042_CN": "Reprodução e Contracepção (Questões 3, 12)",
+        "D025_CN": "Estrutura da Terra (Questão 4)",
+        "D095_CN": "Impactos Ambientais (Questão 5)"
+    };
+
     window.onload = () => {
         document.getElementById('testeID').value = localStorage.getItem('testeID') || "Teste 01";
-        document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "1D2B3A4D5A6B7D8D9A10D11B12A";
+        document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "DBAADBDDAADB";
         document.getElementById('turma').value = localStorage.getItem('turma') || "8ano";
         atualizarEscuta();
     };
@@ -63,53 +72,63 @@
 
     function processarEEnviar(event) {
         const nome = document.getElementById('nomeAluno').value;
-        const oficial = document.getElementById('gabaritoOficial').value.toUpperCase().replace(/[^A-Z]/g, '');
+        const oficial = document.getElementById('gabaritoOficial').value.toUpperCase();
         const turma = document.getElementById('turma').value;
         const teste = document.getElementById('testeID').value;
 
-        if (!nome) return alert("Por favor, digite o nome do aluno!");
+        if (!nome) return alert("Digite o nome do aluno!");
 
-        // Simula a leitura para gerar o desempenho imediato no notebook
-        // Em um sistema real, aqui entraria a leitura da imagem
-        const acertos = Math.floor(Math.random() * (oficial.length + 1)); 
-        const perc = ((acertos / oficial.length) * 100).toFixed(0);
+        // Simulação de erro em habilidades para teste
+        const acertos = Math.floor(Math.random() * (oficial.length + 1));
+        const falhaSorteada = Object.keys(matrizHabilidades)[Math.floor(Math.random() * 4)];
 
         db.ref(`escola/${turma}/${teste}`).push({
             aluno: nome,
             nota: acertos,
-            total: oficial.length,
-            desempenho: perc + "%",
-            data: 20260218 // Formato numérico solicitado
-        }).then(() => {
-            document.getElementById('nomeAluno').value = "";
-            alert("Sincronizado com sucesso!");
-        });
+            habilidade_falha: acertos < (oficial.length * 0.6) ? falhaSorteada : "Nenhuma",
+            data: 20260218
+        }).then(() => { document.getElementById('nomeAluno').value = ""; });
     }
 
     let listener = null;
     function atualizarEscuta() {
         const turma = document.getElementById('turma').value;
         const teste = document.getElementById('testeID').value || "Geral";
-        const lista = document.getElementById('listaResultados');
-
         if (listener) listener.off();
         listener = db.ref(`escola/${turma}/${teste}`);
 
         listener.on('value', (snapshot) => {
+            const lista = document.getElementById('listaResultados');
+            const painel = document.getElementById('painelHabilidades');
             lista.innerHTML = "";
+            let contagemFalhas = { "D041_CN": 0, "D042_CN": 0, "D025_CN": 0, "D095_CN": 0 };
+            let totalAlunos = 0;
+
             snapshot.forEach((child) => {
                 const d = child.val();
+                totalAlunos++;
+                if(d.habilidade_falha !== "Nenhuma") contagemFalhas[d.habilidade_falha]++;
+
                 const item = document.createElement('div');
-                item.className = 'resultado-item';
-                item.innerHTML = `
-                    <div>
-                        <strong>${d.aluno}</strong><br>
-                        <small style="color:#666">Desempenho: ${d.desempenho}</small>
-                    </div>
-                    <span class="nota-badge">${d.nota}/${d.total}</span>
-                `;
+                item.style = "background:white; padding:10px; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,0.05);";
+                item.innerHTML = `<strong>${d.aluno}</strong> <span>Nota: ${d.nota}</span>`;
                 lista.prepend(item);
             });
+
+            // Atualiza o Diagnóstico de Habilidades
+            if (totalAlunos > 0) {
+                painel.innerHTML = "<strong>Focar nestas habilidades:</strong><br><br>";
+                Object.keys(contagemFalhas).forEach(hab => {
+                    const porcentagemErro = ((contagemFalhas[hab] / totalAlunos) * 100).toFixed(0);
+                    painel.innerHTML += `
+                        <div class="habilidade-item">
+                            <span>${hab} - ${matrizHabilidades[hab]}</span>
+                            <span>${porcentagemErro}% de defasagem</span>
+                        </div>
+                        <div class="barra-progresso"><div class="progresso-preenchido" style="width: ${porcentagemErro}%"></div></div><br>
+                    `;
+                });
+            }
         });
     }
 </script>

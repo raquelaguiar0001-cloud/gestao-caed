@@ -12,53 +12,48 @@
         .aba-container { display: flex; gap: 10px; margin-bottom: 10px; }
         .aba { padding: 10px 20px; cursor: pointer; background: #ddd; border-radius: 8px 8px 0 0; font-weight: bold; }
         .aba.ativa { background: white; border-bottom: 3px solid #007bff; color: #007bff; }
-        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .item-aluno { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
-        .porcentagem { font-weight: bold; color: #28a745; }
-        .barra-fundo { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin: 5px 0 15px; }
+        .item-aluno { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .aluno-topo { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .detalhes-correcao { display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px dashed #ccc; }
+        .questao-box { display: inline-block; width: 30px; height: 30px; line-height: 30px; text-align: center; margin: 3px; border-radius: 4px; font-weight: bold; font-size: 12px; color: white; }
+        .acerto { background: #28a745; }
+        .erro { background: #dc3545; }
+        .controles { display: flex; gap: 5px; }
+        button { padding: 8px; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+        .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; width: 100%; padding: 15px; margin-top: 10px; }
+        .barra-fundo { background: #eee; height: 10px; border-radius: 5px; overflow: hidden; margin: 5px 0 15px; }
         .barra-progresso { background: #dc3545; height: 100%; transition: 0.5s; }
-        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-top: 5px; }
-        .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h3>📂 Organização de Testes (Pastas)</h3>
-        <div class="grid-info">
-            <div>
-                <label>Selecione a Turma:</label>
-                <select id="turma" onchange="trocarPasta()"><option value="8ano">8º Ano</option><option value="9ano">9º Ano</option></select>
-            </div>
-            <div>
-                <label>Nome do Teste (Pasta):</label>
-                <input type="text" id="testeID" placeholder="Ex: Avaliação_01" oninput="trocarPasta()">
-            </div>
+        <h3>📂 Pastas de Testes</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <select id="turma" onchange="trocarPasta()"><option value="8ano">8º Ano</option><option value="9ano">9º Ano</option></select>
+            <input type="text" id="testeID" placeholder="Nome do Teste" oninput="trocarPasta()">
         </div>
-        <label>Gabarito Oficial deste Teste:</label>
-        <input type="text" id="gabaritoOficial" placeholder="Ex: ABCD..." oninput="salvarGabarito()">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito (Ex: 1A2B3C...)" oninput="salvarGabarito()">
     </div>
 
     <div class="card">
-        <strong>📸 Lançar Novo Aluno</strong>
-        <input type="text" id="nomeAluno" placeholder="Nome Completo">
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processarEnvio(event)">
-        <button class="btn-foto" onclick="document.getElementById('cameraInput').click()">📷 TIRAR FOTO E SALVAR NA PASTA</button>
+        <strong>📸 Scanner de Aluno</strong>
+        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
+        <input type="text" id="respAluno" placeholder="Respostas do Aluno (Ex: ABCC...)">
+        <button class="btn-foto" onclick="salvarAluno()">✅ SALVAR E CORRIGIR</button>
     </div>
 
     <div class="aba-container">
-        <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Alunos (Acertos %)</div>
-        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho Geral da Turma</div>
+        <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Alunos</div>
+        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho Geral</div>
     </div>
 
     <div id="conteudoAba1" class="card">
-        <h4>Lista de Alunos e Porcentagem de Acertos</h4>
-        <div id="listaAlunos">Carregando pasta...</div>
+        <div id="listaAlunos">Carregando...</div>
     </div>
 
     <div id="conteudoAba2" class="card" style="display:none;">
-        <h4>Diagnóstico de Habilidades da Turma</h4>
         <div id="diagnosticoTurma">Aguardando dados...</div>
     </div>
 </div>
@@ -68,13 +63,11 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const habilidadesPadrao = { "D041_CN": "Energia", "D042_CN": "Reprodução", "D025_CN": "Terra", "D095_CN": "Ambiente" };
-
     window.onload = () => {
         document.getElementById('testeID').value = localStorage.getItem('testeID') || "Teste_01";
         document.getElementById('turma').value = localStorage.getItem('turma') || "8ano";
         document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
-        trocarPasta();
+        atualizarEscuta();
     };
 
     function trocarPasta() {
@@ -87,6 +80,29 @@
         localStorage.setItem('gabaritoOficial', document.getElementById('gabaritoOficial').value);
     }
 
+    function salvarAluno() {
+        const nome = document.getElementById('nomeAluno').value;
+        const oficial = document.getElementById('gabaritoOficial').value.toUpperCase();
+        const respostas = document.getElementById('respAluno').value.toUpperCase();
+        if(!nome || !oficial) return alert("Preencha nome e gabarito oficial!");
+
+        let acertos = 0;
+        for(let i=0; i < oficial.length; i++) {
+            if(respostas[i] === oficial[i]) acertos++;
+        }
+
+        db.ref(`escola/${document.getElementById('turma').value}/${document.getElementById('testeID').value}`).push({
+            aluno: nome, respostas: respostas, acertos: acertos, total: oficial.length,
+            data: 20260218
+        });
+        document.getElementById('nomeAluno').value = ""; document.getElementById('respAluno').value = "";
+    }
+
+    function toggleDetalhes(id) {
+        const el = document.getElementById('detalhe-' + id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
     function mudarAba(n) {
         document.getElementById('conteudoAba1').style.display = n === 1 ? 'block' : 'none';
         document.getElementById('conteudoAba2').style.display = n === 2 ? 'block' : 'none';
@@ -94,53 +110,39 @@
         document.getElementById('aba2').className = n === 2 ? 'aba ativa' : 'aba';
     }
 
-    function processarEnvio(event) {
-        const nome = document.getElementById('nomeAluno').value;
-        const oficial = document.getElementById('gabaritoOficial').value.toUpperCase();
-        const turma = document.getElementById('turma').value;
-        const pasta = document.getElementById('testeID').value || "Geral";
-
-        if (!nome || !oficial) return alert("Preencha o nome e o gabarito oficial!");
-
-        const acertos = Math.floor(Math.random() * (oficial.length + 1));
-        const porc = ((acertos / oficial.length) * 100).toFixed(1);
-
-        db.ref(`escola/${turma}/${pasta}`).push({
-            aluno: nome,
-            acertos: acertos,
-            total: oficial.length,
-            porcentagem: porc + "%",
-            falha: acertos < (oficial.length * 0.6) ? Object.keys(habilidadesPadrao)[Math.floor(Math.random()*4)] : "Nenhuma"
-        }).then(() => { document.getElementById('nomeAluno').value = ""; });
-    }
-
     let refAtiva = null;
     function atualizarEscuta() {
-        const turma = document.getElementById('turma').value;
-        const pasta = document.getElementById('testeID').value || "Geral";
+        const path = `escola/${document.getElementById('turma').value}/${document.getElementById('testeID').value}`;
+        const oficial = document.getElementById('gabaritoOficial').value.toUpperCase();
         if (refAtiva) refAtiva.off();
-        refAtiva = db.ref(`escola/${turma}/${pasta}`);
+        refAtiva = db.ref(path);
 
-        refAtiva.on('value', (snapshot) => {
+        refAtiva.on('value', (snap) => {
             const lista = document.getElementById('listaAlunos');
-            const diag = document.getElementById('diagnosticoTurma');
-            lista.innerHTML = ""; diag.innerHTML = "";
-            let errosHab = { "D041_CN": 0, "D042_CN": 0, "D025_CN": 0, "D095_CN": 0 };
-            let totalAlunos = 0;
-
-            snapshot.forEach((child) => {
+            lista.innerHTML = "";
+            snap.forEach((child) => {
                 const d = child.val();
-                totalAlunos++;
-                if(d.falha !== "Nenhuma") errosHab[d.falha]++;
-                lista.innerHTML += `<div class="item-aluno"><span>${d.aluno}</span><span class="porcentagem">${d.porcentagem}</span></div>`;
-            });
+                let boxes = "";
+                for(let i=0; i < oficial.length; i++) {
+                    const status = d.respostas[i] === oficial[i] ? 'acerto' : 'erro';
+                    boxes += `<div class="questao-box ${status}" title="Oficial: ${oficial[i]} | Aluno: ${d.respostas[i] || '-'}">${i+1}</div>`;
+                }
 
-            if (totalAlunos > 0) {
-                Object.keys(errosHab).forEach(h => {
-                    const p = ((errosHab[h] / totalAlunos) * 100).toFixed(0);
-                    diag.innerHTML += `<div>${h} - ${habilidadesPadrao[h]} (${p}% defasagem)</div><div class="barra-fundo"><div class="barra-progresso" style="width:${p}%"></div></div>`;
-                });
-            } else { lista.innerHTML = "Pasta vazia. Comece a lançar os resultados!"; }
+                lista.innerHTML += `
+                    <div class="item-aluno">
+                        <div class="aluno-topo" onclick="toggleDetalhes('${child.key}')">
+                            <span><strong>${d.aluno}</strong> - ${((d.acertos/d.total)*100).toFixed(1)}%</span>
+                            <div class="controles">
+                                <span>🔍</span>
+                                <button onclick="event.stopPropagation(); if(confirm('Excluir?')) db.ref('${path}/${child.key}').remove()">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="detalhes-correcao" id="detalhe-${child.key}">
+                            <small>Verde: Acerto | Vermelho: Erro (Clique no nome para minimizar)</small><br><br>
+                            ${boxes}
+                        </div>
+                    </div>`;
+            });
         });
     }
 </script>

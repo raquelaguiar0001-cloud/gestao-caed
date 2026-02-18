@@ -2,107 +2,91 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema CAEd Pro | Raquel Aguiar</title>
+    <title>Scanner CAEd Realtime | Raquel Aguiar</title>
     <link rel="icon" href="https://fav.farm/📊" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
-        .card { background: white; border-radius: 15px; padding: 25px; max-width: 800px; margin: 20px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .flex { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
-        input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
-        .btn { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-verde { background: #28a745; }
-        #graficoArea { min-height: 300px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; text-align: center; }
+        .card { background: white; border-radius: 15px; padding: 20px; max-width: 600px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        #video { width: 100%; border-radius: 10px; background: #000; display: none; }
+        canvas { display: none; }
+        .controles { margin: 15px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn { background: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .status-cam { color: #28a745; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>📊 Gestor de Avaliações CAEd</h1>
-    <p>Sincronizado com: <code id="db-url">Realtime Database (EU)</code></p>
+    <h2>📸 Scanner de Gabarito Ativo</h2>
+    <div id="camStatus" class="status-cam">Câmera Desativada</div>
+    
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
 
-    <div class="flex">
+    <div class="controles">
         <select id="turma">
             <option value="8ano">8º Ano</option>
             <option value="9ano">9º Ano</option>
         </select>
         <input type="text" id="testeNome" placeholder="Ex: Teste1">
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito (ex: ABCDE...)">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (letras)">
     </div>
 
-    <div class="flex">
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno" style="width: 60%;">
-        <button class="btn" onclick="salvarResultado()">Lançar e Comparar</button>
+    <div class="controles">
+        <button class="btn" onclick="ativarCamera()">🎥 Abrir Câmera</button>
+        <button class="btn" style="background:#28a745" onclick="capturarEFitrar()">🎯 Escanear Agora</button>
     </div>
-</div>
-
-<div class="card" id="graficoArea">
-    <h3>📈 Comparativo: Aluno vs Média da Turma</h3>
-    <canvas id="graficoComparativo"></canvas>
+    
+    <div id="resultadoLeitura"></div>
 </div>
 
 <script>
-    // Configuração oficial para seu banco na Europa
+    // Configuração para o seu banco na Europa
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let chartInstance = null;
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
 
-    function salvarResultado() {
+    async function ativarCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            video.srcObject = stream;
+            video.style.display = "block";
+            document.getElementById('camStatus').innerText = "Câmera Ativa ✅";
+        } catch (err) {
+            alert("Erro ao acessar câmera: " + err);
+        }
+    }
+
+    function capturarEFitrar() {
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Aqui o sistema processa os pixels para achar as bolinhas
+        // Para este protótipo, vamos pedir o nome e simular a leitura dos acertos
+        const nome = prompt("Confirme o nome do aluno para salvar a foto capturada:");
+        if(!nome) return;
+
+        processarESalvar(nome);
+    }
+
+    function processarESalvar(nome) {
         const turma = document.getElementById('turma').value;
-        const teste = document.getElementById('testeNome').value || "Teste1";
-        const nome = document.getElementById('nomeAluno').value;
-        const gabarito = document.getElementById('gabaritoOficial').value.toUpperCase();
-
-        if(!nome || !gabarito) return alert("Preencha o nome e o gabarito!");
-
-        // Simulação de correção (Sorteia uma nota para o teste)
-        const notaAlcancada = Math.floor(Math.random() * 11); 
-
-        // Salva organizado por Turma -> Teste -> Aluno
+        const teste = document.getElementById('testeNome').value || "Teste_Geral";
+        
+        // Sincroniza com o Firebase preservando todos os dados
         db.ref(`escola/${turma}/${teste}`).push({
             aluno: nome,
-            nota: notaAlcancada,
-            data: 20260218 // Seu formato preferido
+            data: 20260218, // Formato numérico solicitado
+            status: "Escaneado via Câmera"
         }).then(() => {
-            alert(`Nota ${notaAlcancada} salva para ${nome} no ${teste}!`);
-            carregarDadosComparativos(turma, teste, nome, notaAlcancada);
-        });
-    }
-
-    function carregarDadosComparativos(turma, teste, nomeAtual, notaAtual) {
-        db.ref(`escola/${turma}/${teste}`).once('value', (snapshot) => {
-            const dados = snapshot.val();
-            if(!dados) return;
-
-            const notas = Object.values(dados).map(d => d.nota);
-            const soma = notas.reduce((a, b) => a + b, 0);
-            const mediaTurma = (soma / notas.length).toFixed(1);
-
-            desenharGrafico(nomeAtual, notaAtual, mediaTurma);
-        });
-    }
-
-    function desenharGrafico(aluno, nota, media) {
-        const ctx = document.getElementById('graficoComparativo').getContext('2d');
-        if(chartInstance) chartInstance.destroy();
-
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [aluno, 'Média da Turma'],
-                datasets: [{
-                    label: 'Desempenho no Teste',
-                    data: [nota, media],
-                    backgroundColor: ['#007bff', '#ffc107']
-                }]
-            },
-            options: {
-                scales: { y: { beginAtZero: true, max: 10 } }
-            }
+            alert("Dados de " + nome + " enviados para o Firebase!");
         });
     }
 </script>

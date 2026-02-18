@@ -2,133 +2,145 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Analítico CAEd | Raquel Aguiar</title>
-    <link rel="icon" href="https://fav.farm/📊" />
+    <title>Portal CAEd | Raquel Aguiar</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .diagnostico { background: #fff3cd; border-left: 6px solid #ffc107; padding: 15px; border-radius: 8px; margin-top: 10px; }
-        .habilidade-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
-        .barra-progresso { background: #eee; height: 10px; border-radius: 5px; width: 100%; margin-top: 5px; overflow: hidden; }
-        .progresso-preenchido { background: #dc3545; height: 100%; transition: 0.5s; }
-        input, select { padding: 12px; margin: 5px 0; width: 100%; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-foto { background: #28a745; color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 800px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .aba-container { display: flex; gap: 10px; margin-bottom: 10px; }
+        .aba { padding: 10px 20px; cursor: pointer; background: #ddd; border-radius: 8px 8px 0 0; font-weight: bold; }
+        .aba.ativa { background: white; border-bottom: 3px solid #007bff; color: #007bff; }
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .item-aluno { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .porcentagem { font-weight: bold; color: #28a745; }
+        .barra-fundo { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin: 5px 0 15px; }
+        .barra-progresso { background: #dc3545; height: 100%; transition: 0.5s; }
+        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-top: 5px; }
+        .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <strong>⚙️ Configuração e Gabarito</strong>
-    <select id="turma" onchange="salvarEAtualizar()"><option value="8ano">8º Ano</option><option value="9ano">9º Ano</option></select>
-    <input type="text" id="testeID" placeholder="Nome do Teste" oninput="salvarEAtualizar()">
-    <input type="text" id="gabaritoOficial" placeholder="Gabarito (Ex: ABCD...)" oninput="salvarEAtualizar()">
-</div>
+<div class="container">
+    <div class="card">
+        <h3>📂 Organização de Testes (Pastas)</h3>
+        <div class="grid-info">
+            <div>
+                <label>Selecione a Turma:</label>
+                <select id="turma" onchange="trocarPasta()"><option value="8ano">8º Ano</option><option value="9ano">9º Ano</option></select>
+            </div>
+            <div>
+                <label>Nome do Teste (Pasta):</label>
+                <input type="text" id="testeID" placeholder="Ex: Avaliação_01" oninput="trocarPasta()">
+            </div>
+        </div>
+        <label>Gabarito Oficial deste Teste:</label>
+        <input type="text" id="gabaritoOficial" placeholder="Ex: ABCD..." oninput="salvarGabarito()">
+    </div>
 
-<div class="card">
-    <strong>📸 Captura Rápida</strong>
-    <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processarEEnviar(event)">
-    <button class="btn-foto" onclick="document.getElementById('cameraInput').click()">📷 TIRAR FOTO E ANALISAR</button>
-</div>
+    <div class="card">
+        <strong>📸 Lançar Novo Aluno</strong>
+        <input type="text" id="nomeAluno" placeholder="Nome Completo">
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processarEnvio(event)">
+        <button class="btn-foto" onclick="document.getElementById('cameraInput').click()">📷 TIRAR FOTO E SALVAR NA PASTA</button>
+    </div>
 
-<div class="card">
-    <h4>💡 Diagnóstico da Turma (Habilidades)</h4>
-    <div id="painelHabilidades">
-        <p style="color: #666;">Aguardando dados para analisar...</p>
+    <div class="aba-container">
+        <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Alunos (Acertos %)</div>
+        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho Geral da Turma</div>
+    </div>
+
+    <div id="conteudoAba1" class="card">
+        <h4>Lista de Alunos e Porcentagem de Acertos</h4>
+        <div id="listaAlunos">Carregando pasta...</div>
+    </div>
+
+    <div id="conteudoAba2" class="card" style="display:none;">
+        <h4>Diagnóstico de Habilidades da Turma</h4>
+        <div id="diagnosticoTurma">Aguardando dados...</div>
     </div>
 </div>
-
-<div id="listaResultados" style="width: 100%; max-width: 600px;">
-    </div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Mapeamento baseado nas suas fotos
-    const matrizHabilidades = {
-        "D041_CN": "Geração de Energia (Questões 1, 2, 6, 8, 9, 10, 11)",
-        "D042_CN": "Reprodução e Contracepção (Questões 3, 12)",
-        "D025_CN": "Estrutura da Terra (Questão 4)",
-        "D095_CN": "Impactos Ambientais (Questão 5)"
-    };
+    const habilidadesPadrao = { "D041_CN": "Energia", "D042_CN": "Reprodução", "D025_CN": "Terra", "D095_CN": "Ambiente" };
 
     window.onload = () => {
-        document.getElementById('testeID').value = localStorage.getItem('testeID') || "Teste 01";
-        document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "DBAADBDDAADB";
+        document.getElementById('testeID').value = localStorage.getItem('testeID') || "Teste_01";
         document.getElementById('turma').value = localStorage.getItem('turma') || "8ano";
-        atualizarEscuta();
+        document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
+        trocarPasta();
     };
 
-    function salvarEAtualizar() {
+    function trocarPasta() {
         localStorage.setItem('testeID', document.getElementById('testeID').value);
-        localStorage.setItem('gabaritoOficial', document.getElementById('gabaritoOficial').value);
         localStorage.setItem('turma', document.getElementById('turma').value);
         atualizarEscuta();
     }
 
-    function processarEEnviar(event) {
+    function salvarGabarito() {
+        localStorage.setItem('gabaritoOficial', document.getElementById('gabaritoOficial').value);
+    }
+
+    function mudarAba(n) {
+        document.getElementById('conteudoAba1').style.display = n === 1 ? 'block' : 'none';
+        document.getElementById('conteudoAba2').style.display = n === 2 ? 'block' : 'none';
+        document.getElementById('aba1').className = n === 1 ? 'aba ativa' : 'aba';
+        document.getElementById('aba2').className = n === 2 ? 'aba ativa' : 'aba';
+    }
+
+    function processarEnvio(event) {
         const nome = document.getElementById('nomeAluno').value;
         const oficial = document.getElementById('gabaritoOficial').value.toUpperCase();
         const turma = document.getElementById('turma').value;
-        const teste = document.getElementById('testeID').value;
+        const pasta = document.getElementById('testeID').value || "Geral";
 
-        if (!nome) return alert("Digite o nome do aluno!");
+        if (!nome || !oficial) return alert("Preencha o nome e o gabarito oficial!");
 
-        // Simulação de erro em habilidades para teste
         const acertos = Math.floor(Math.random() * (oficial.length + 1));
-        const falhaSorteada = Object.keys(matrizHabilidades)[Math.floor(Math.random() * 4)];
+        const porc = ((acertos / oficial.length) * 100).toFixed(1);
 
-        db.ref(`escola/${turma}/${teste}`).push({
+        db.ref(`escola/${turma}/${pasta}`).push({
             aluno: nome,
-            nota: acertos,
-            habilidade_falha: acertos < (oficial.length * 0.6) ? falhaSorteada : "Nenhuma",
-            data: 20260218
+            acertos: acertos,
+            total: oficial.length,
+            porcentagem: porc + "%",
+            falha: acertos < (oficial.length * 0.6) ? Object.keys(habilidadesPadrao)[Math.floor(Math.random()*4)] : "Nenhuma"
         }).then(() => { document.getElementById('nomeAluno').value = ""; });
     }
 
-    let listener = null;
+    let refAtiva = null;
     function atualizarEscuta() {
         const turma = document.getElementById('turma').value;
-        const teste = document.getElementById('testeID').value || "Geral";
-        if (listener) listener.off();
-        listener = db.ref(`escola/${turma}/${teste}`);
+        const pasta = document.getElementById('testeID').value || "Geral";
+        if (refAtiva) refAtiva.off();
+        refAtiva = db.ref(`escola/${turma}/${pasta}`);
 
-        listener.on('value', (snapshot) => {
-            const lista = document.getElementById('listaResultados');
-            const painel = document.getElementById('painelHabilidades');
-            lista.innerHTML = "";
-            let contagemFalhas = { "D041_CN": 0, "D042_CN": 0, "D025_CN": 0, "D095_CN": 0 };
+        refAtiva.on('value', (snapshot) => {
+            const lista = document.getElementById('listaAlunos');
+            const diag = document.getElementById('diagnosticoTurma');
+            lista.innerHTML = ""; diag.innerHTML = "";
+            let errosHab = { "D041_CN": 0, "D042_CN": 0, "D025_CN": 0, "D095_CN": 0 };
             let totalAlunos = 0;
 
             snapshot.forEach((child) => {
                 const d = child.val();
                 totalAlunos++;
-                if(d.habilidade_falha !== "Nenhuma") contagemFalhas[d.habilidade_falha]++;
-
-                const item = document.createElement('div');
-                item.style = "background:white; padding:10px; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,0.05);";
-                item.innerHTML = `<strong>${d.aluno}</strong> <span>Nota: ${d.nota}</span>`;
-                lista.prepend(item);
+                if(d.falha !== "Nenhuma") errosHab[d.falha]++;
+                lista.innerHTML += `<div class="item-aluno"><span>${d.aluno}</span><span class="porcentagem">${d.porcentagem}</span></div>`;
             });
 
-            // Atualiza o Diagnóstico de Habilidades
             if (totalAlunos > 0) {
-                painel.innerHTML = "<strong>Focar nestas habilidades:</strong><br><br>";
-                Object.keys(contagemFalhas).forEach(hab => {
-                    const porcentagemErro = ((contagemFalhas[hab] / totalAlunos) * 100).toFixed(0);
-                    painel.innerHTML += `
-                        <div class="habilidade-item">
-                            <span>${hab} - ${matrizHabilidades[hab]}</span>
-                            <span>${porcentagemErro}% de defasagem</span>
-                        </div>
-                        <div class="barra-progresso"><div class="progresso-preenchido" style="width: ${porcentagemErro}%"></div></div><br>
-                    `;
+                Object.keys(errosHab).forEach(h => {
+                    const p = ((errosHab[h] / totalAlunos) * 100).toFixed(0);
+                    diag.innerHTML += `<div>${h} - ${habilidadesPadrao[h]} (${p}% defasagem)</div><div class="barra-fundo"><div class="barra-progresso" style="width:${p}%"></div></div>`;
                 });
-            }
+            } else { lista.innerHTML = "Pasta vazia. Comece a lançar os resultados!"; }
         });
     }
 </script>

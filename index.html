@@ -2,48 +2,47 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Scanner CAEd Realtime | Raquel Aguiar</title>
-    <link rel="icon" href="https://fav.farm/📊" />
+    <title>Scanner Veloz CAEd | Raquel Aguiar</title>
+    <link rel="icon" href="https://fav.farm/🚀" />
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; text-align: center; }
-        .card { background: white; border-radius: 15px; padding: 20px; max-width: 600px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        #video { width: 100%; border-radius: 10px; background: #000; display: none; }
-        canvas { display: none; }
-        .controles { margin: 15px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn { background: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
-        .status-cam { color: #28a745; font-weight: bold; margin-bottom: 10px; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .painel-fixo { background: white; width: 100%; max-width: 500px; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .camera-container { width: 100%; max-width: 500px; margin-top: 15px; position: relative; }
+        video { width: 100%; border-radius: 8px; background: #000; }
+        .btn-foto { background: #ef4444; color: white; border: none; width: 70px; height: 70px; border-radius: 50%; font-size: 30px; cursor: pointer; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-top: -35px; z-index: 101; }
+        .lista-recente { width: 100%; max-width: 500px; margin-top: 20px; }
+        .aluno-item { background: white; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; border-left: 5px solid #28a745; }
+        input, select { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>📸 Scanner de Gabarito Ativo</h2>
-    <div id="camStatus" class="status-cam">Câmera Desativada</div>
-    
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-
-    <div class="controles">
-        <select id="turma">
-            <option value="8ano">8º Ano</option>
-            <option value="9ano">9º Ano</option>
-        </select>
-        <input type="text" id="testeNome" placeholder="Ex: Teste1">
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (letras)">
+<div class="painel-fixo">
+    <strong>Configuração do Teste (Fica salvo)</strong>
+    <div style="display: flex; gap: 5px;">
+        <select id="turma"><option value="8ano">8º Ano</option><option value="9ano">9º Ano</option></select>
+        <input type="text" id="testeNome" placeholder="Ex: Teste01">
     </div>
-
-    <div class="controles">
-        <button class="btn" onclick="ativarCamera()">🎥 Abrir Câmera</button>
-        <button class="btn" style="background:#28a745" onclick="capturarEFitrar()">🎯 Escanear Agora</button>
-    </div>
-    
-    <div id="resultadoLeitura"></div>
+    <input type="text" id="gabaritoFixo" placeholder="Gabarito Oficial (Ex: ABCDE...)">
+    <small>O gabarito acima será usado para todos os scans até você mudar.</small>
 </div>
 
+<div class="camera-container">
+    <video id="video" autoplay playsinline></video>
+    <div style="text-align: center;">
+        <button class="btn-foto" onclick="tirarFotoRapida()">📸</button>
+    </div>
+</div>
+
+<div class="lista-recente" id="historico">
+    <h4>Últimos Scans (Salvos no Firebase)</h4>
+    </div>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
 <script>
-    // Configuração para o seu banco na Europa
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -51,43 +50,43 @@
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
 
-    async function ativarCamera() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            video.srcObject = stream;
-            video.style.display = "block";
-            document.getElementById('camStatus').innerText = "Câmera Ativa ✅";
-        } catch (err) {
-            alert("Erro ao acessar câmera: " + err);
-        }
-    }
+    // Inicia câmera imediatamente
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => { video.srcObject = stream; });
 
-    function capturarEFitrar() {
+    function tirarFotoRapida() {
+        const nome = prompt("Nome do Aluno:");
+        if (!nome) return;
+
         const context = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Aqui o sistema processa os pixels para achar as bolinhas
-        // Para este protótipo, vamos pedir o nome e simular a leitura dos acertos
-        const nome = prompt("Confirme o nome do aluno para salvar a foto capturada:");
-        if(!nome) return;
-
-        processarESalvar(nome);
+        const fotoBase64 = canvas.toDataURL('image/jpeg', 0.5); // Comprime para ser rápido
+        
+        salvarNoFirebase(nome, fotoBase64);
     }
 
-    function processarESalvar(nome) {
+    function salvarNoFirebase(nome, foto) {
         const turma = document.getElementById('turma').value;
-        const teste = document.getElementById('testeNome').value || "Teste_Geral";
-        
-        // Sincroniza com o Firebase preservando todos os dados
-        db.ref(`escola/${turma}/${teste}`).push({
+        const teste = document.getElementById('testeNome').value || "Sem_Nome";
+        const gabaritoRef = document.getElementById('gabaritoFixo').value;
+
+        const novoRegistro = db.ref(`escola/${turma}/${teste}`).push();
+        novoRegistro.set({
             aluno: nome,
-            data: 20260218, // Formato numérico solicitado
-            status: "Escaneado via Câmera"
-        }).then(() => {
-            alert("Dados de " + nome + " enviados para o Firebase!");
+            data: 20260218, // Seu formato preferido
+            gabaritoOficialUsado: gabaritoRef,
+            fotoGabarito: foto, 
+            status: "Aguardando Correção"
         });
+
+        // Atualiza lista na tela na hora
+        const item = document.createElement('div');
+        item.className = 'aluno-item';
+        item.innerHTML = `<span>${nome}</span> <span>✅ Salvo</span>`;
+        document.getElementById('historico').prepend(item);
     }
 </script>
 </body>

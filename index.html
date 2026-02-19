@@ -11,20 +11,20 @@
         .container { width: 100%; max-width: 600px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         
-        /* Grid de Blocos */
+        /* Grid de Blocos de Provas conforme rascunho */
         .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
-        .prova-bloco { position: relative; border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; transition: 0.3s; }
+        .prova-bloco { position: relative; border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; transition: 0.3s; min-height: 50px; display: flex; align-items: center; justify-content: center; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
-        .btn-excluir-bloco { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; border: none; cursor: pointer; }
+        .btn-excluir-bloco { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; border: none; cursor: pointer; z-index: 10; }
 
         /* Abas */
         .aba-container { display: flex; gap: 10px; margin-bottom: 10px; width: 100%; }
         .aba { flex: 1; padding: 12px; text-align: center; cursor: pointer; background: #ddd; border-radius: 8px; font-weight: bold; }
         .aba.ativa { background: #007bff; color: white; }
 
-        /* Áreas de Upload/Colagem */
+        /* Áreas de Colagem */
         .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; font-size: 13px; }
-        .upload-area:focus { border-color: #007bff; outline: none; }
+        .upload-area:focus { border-color: #007bff; outline: none; background: #eef6ff; }
         
         .questao-box { display: inline-block; width: 25px; height: 25px; line-height: 25px; text-align: center; margin: 2px; border-radius: 4px; font-weight: bold; color: white; font-size: 11px; }
         .acerto { background: #28a745; }
@@ -58,7 +58,7 @@
             <input type="hidden" id="imgOficial">
         </div>
         
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial Digitado (Ex: 1A2B3C...)" oninput="salvarGabarito()">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Ex: 1A2B3C...)" oninput="salvarGabarito()">
     </div>
 
     <div class="card">
@@ -71,7 +71,7 @@
             <input type="hidden" id="imgAluno">
         </div>
 
-        <input type="text" id="gabaritoDigitadoAluno" placeholder="Ou digite o gabarito do aluno (Ex: 1D2C3A...)">
+        <input type="text" id="gabaritoDigitadoAluno" placeholder="Digite o gabarito do aluno (Ex: 1D2C...)">
 
         <button class="btn-foto" onclick="processarCorrecao()">✅ SALVAR E CORRIGIR AGORA</button>
     </div>
@@ -83,7 +83,7 @@
 
     <div id="contAba1" class="card">
         <button class="btn-excel" onclick="exportarExcel()">📥 Baixar Lista Excel</button>
-        <div id="listaAlunos" style="margin-top: 15px;">Carregando...</div>
+        <div id="listaAlunos" style="margin-top: 15px;">Aguardando dados...</div>
     </div>
 
     <div id="contAba2" class="card" style="display:none;">
@@ -96,7 +96,6 @@
 </div>
 
 <script>
-    // Configuração do Firebase
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -107,17 +106,24 @@
         renderizarBlocos();
         const salvo = localStorage.getItem('testeID');
         if(salvo) selecionarTeste(salvo);
+        document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
     };
 
     function extrairGabarito(str) { 
+        if(!str) return "";
         return str.toUpperCase().replace(/[0-9\-\s]/g, ''); 
     }
 
-    // Gerenciamento de Provas
+    function salvarGabarito() {
+        localStorage.setItem('gabaritoOficial', document.getElementById('gabaritoOficial').value);
+        atualizarEscuta();
+    }
+
+    // Gerenciamento de Provas (Blocos do Rascunho)
     function adicionarBloco() {
         const nome = document.getElementById('novoTesteNome').value;
         if (!nome) return;
-        let testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED"]');
+        let testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"]');
         testes.push(nome);
         localStorage.setItem('listaTestes', JSON.stringify(testes));
         document.getElementById('novoTesteNome').value = "";
@@ -126,7 +132,7 @@
 
     function excluirBloco(index, event) {
         event.stopPropagation();
-        if(!confirm("Excluir esta avaliação?")) return;
+        if(!confirm("Deseja excluir este bloco?")) return;
         let testes = JSON.parse(localStorage.getItem('listaTestes'));
         testes.splice(index, 1);
         localStorage.setItem('listaTestes', JSON.stringify(testes));
@@ -135,12 +141,12 @@
 
     function renderizarBlocos() {
         const grid = document.getElementById('gridTestes');
-        const testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED"]');
+        const testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"]');
         grid.innerHTML = "";
         testes.forEach((nome, index) => {
-            const classe = document.getElementById('testeID').value === nome ? 'selecionado' : '';
+            const selecionado = localStorage.getItem('testeID') === nome ? 'selecionado' : '';
             grid.innerHTML += `
-                <div class="prova-bloco ${classe}" onclick="selecionarTeste('${nome}')">
+                <div class="prova-bloco ${selecionado}" onclick="selecionarTeste('${nome}')">
                     <button class="btn-excluir-bloco" onclick="excluirBloco(${index}, event)">✕</button>
                     ${nome}
                 </div>`;
@@ -148,17 +154,12 @@
     }
 
     function selecionarTeste(nome) {
-        const inputID = document.createElement("input");
-        inputID.type = "hidden"; inputID.id = "testeID"; inputID.value = nome;
-        if(document.getElementById('testeID')) document.getElementById('testeID').value = nome;
-        else document.body.appendChild(inputID);
-        
         localStorage.setItem('testeID', nome);
         renderizarBlocos();
         atualizarEscuta();
     }
 
-    // Colar Imagem
+    // Função para colar imagem (Ctrl+V)
     function colarImagem(event, previewId, hiddenId) {
         const itens = (event.clipboardData || event.originalEvent.clipboardData).items;
         for (let i = 0; i < itens.length; i++) {
@@ -174,43 +175,55 @@
         }
     }
 
-    // Correção e Gravação (Preservando todos os dados)
+    // Processamento da Correção
     function processarCorrecao() {
-        const nome = document.getElementById('nomeAluno').value;
-        const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
-        let respostaAluno = extrairGabarito(document.getElementById('gabaritoDigitadoAluno').value);
+        const nome = document.getElementById('nomeAluno').value.toUpperCase();
+        const gabOficialRaw = document.getElementById('gabaritoOficial').value;
+        const oficial = extrairGabarito(gabOficialRaw);
+        const alunoRaw = document.getElementById('gabaritoDigitadoAluno').value;
+        let respostaAluno = extrairGabarito(alunoRaw);
         
-        if(!nome || !oficial) return alert("Preencha Nome e Gabarito Oficial!");
-        if(!respostaAluno) respostaAluno = oficial; // Se não digitou, assume correção via foto (lógica de scan)
+        const testeID = localStorage.getItem('testeID');
+
+        if(!nome) return alert("Por favor, digite o Nome do Aluno.");
+        if(!oficial) return alert("Por favor, preencha o Gabarito Oficial acima.");
+        if(!testeID) return alert("Selecione um bloco de teste (8º ou 9º ano).");
+
+        // Se o campo do aluno estiver vazio, o sistema assume acerto total (correção manual via imagem)
+        if(!respostaAluno) respostaAluno = oficial;
 
         let acertos = 0;
         for(let i=0; i < oficial.length; i++) {
             if(respostaAluno[i] === oficial[i]) acertos++;
         }
 
-        const path = `escola/${document.getElementById('turma').value}/${document.getElementById('testeID').value}`;
-        db.ref(path).push({
+        const turma = document.getElementById('turma').value;
+        const dataSimples = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+
+        db.ref(`escola/${turma}/${testeID}`).push({
             aluno: nome,
             respostas: respostaAluno,
             acertos: acertos,
             total: oficial.length,
             foto: document.getElementById('imgAluno').value,
-            data: new Date().toLocaleDateString('pt-BR').replace(/\//g, '')
+            data: dataSimples
         }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('gabaritoDigitadoAluno').value = "";
             document.getElementById('previewAluno').style.display = "none";
             document.getElementById('imgAluno').value = "";
+            alert("Salvo com sucesso!");
         });
     }
 
     function atualizarEscuta() {
         const turma = document.getElementById('turma').value;
-        const teste = document.getElementById('testeID').value;
-        const path = `escola/${turma}/${teste}`;
+        const testeID = localStorage.getItem('testeID');
+        if(!testeID) return;
+
         const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
         
-        db.ref(path).on('value', (snap) => {
+        db.ref(`escola/${turma}/${testeID}`).on('value', (snap) => {
             const lista = document.getElementById('listaAlunos');
             lista.innerHTML = "";
             dadosAtuais = [];
@@ -230,8 +243,8 @@
 
                 lista.innerHTML += `
                     <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-                        <button style="width:auto; float:right; background:red; color:white; padding:4px 8px; cursor:pointer;" onclick="db.ref('${path}/${child.key}').remove()">Excluir</button>
-                        <strong>${d.aluno}</strong> - Nota: ${d.acertos}/${oficial.length}
+                        <button style="width:auto; float:right; background:red; color:white; padding:4px 8px; cursor:pointer;" onclick="db.ref('escola/${turma}/${testeID}/${child.key}').remove()">Excluir</button>
+                        <strong>${d.aluno}</strong> - Resultado: ${d.acertos}/${oficial.length}
                         <div style="margin-top:5px;">${boxes}</div>
                     </div>`;
             });
@@ -239,15 +252,16 @@
             const perc = questT > 0 ? (acertosT / questT) * 100 : 0;
             document.getElementById('barraProgresso').style.width = perc + "%";
             document.getElementById('barraProgresso').innerText = perc.toFixed(0) + "%";
-            document.getElementById('statsGeral').innerText = `Média baseada em ${snap.numChildren()} alunos.`;
+            document.getElementById('statsGeral').innerText = `Média da turma: ${snap.numChildren()} alunos avaliados.`;
         });
     }
 
     function exportarExcel() {
+        if(dadosAtuais.length === 0) return alert("Não há dados para exportar.");
         const ws = XLSX.utils.json_to_sheet(dadosAtuais);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Notas");
-        XLSX.writeFile(wb, `Relatorio_${document.getElementById('testeID').value}.xlsx`);
+        XLSX.writeFile(wb, `Relatorio_${localStorage.getItem('testeID')}.xlsx`);
     }
 
     function mudarAba(n) {

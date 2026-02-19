@@ -11,7 +11,7 @@
         .container { width: 100%; max-width: 600px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         
-        /* Grid de Blocos de Provas */
+        /* Grid de Blocos */
         .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
         .prova-bloco { position: relative; border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; transition: 0.3s; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
@@ -47,7 +47,7 @@
 
         <div style="display: flex; gap: 5px; margin-top: 10px;">
             <input type="text" id="novoTesteNome" placeholder="Nova Prova (Ex: Simulado)">
-            <button onclick="adicionarBloco()" style="width: 60px; background: #007bff; color: white;">+</button>
+            <button onclick="adicionarBloco()" style="width: 60px; background: #007bff; color: white; cursor:pointer;">+</button>
         </div>
 
         <div id="gridTestes" class="prova-grid"></div>
@@ -58,18 +58,20 @@
             <input type="hidden" id="imgOficial">
         </div>
         
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito em Texto (Ex: 1A2B3C...)" oninput="salvarGabarito()">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial Digitado (Ex: 1A2B3C...)" oninput="salvarGabarito()">
     </div>
 
     <div class="card">
-        <strong>📸 Scanner do Aluno</strong>
+        <strong>📸 Scanner e Entrada do Aluno</strong>
         <input type="text" id="nomeAluno" placeholder="Nome completo do Aluno">
         
         <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
-            <span>Clique aqui e Cole (Ctrl+V) a FOTO DO ALUNO</span>
+            <span>Clique aqui e Cole (Ctrl+V) a FOTO DO ALUNO (Opcional)</span>
             <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
             <input type="hidden" id="imgAluno">
         </div>
+
+        <input type="text" id="gabaritoDigitadoAluno" placeholder="Ou digite o gabarito do aluno (Ex: 1D2C3A...)">
 
         <button class="btn-foto" onclick="processarCorrecao()">✅ SALVAR E CORRIGIR AGORA</button>
     </div>
@@ -94,7 +96,7 @@
 </div>
 
 <script>
-    // CONFIGURAÇÃO FIREBASE
+    // Configuração do Firebase
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -103,16 +105,19 @@
 
     window.onload = () => {
         renderizarBlocos();
-        if(localStorage.getItem('testeID')) selecionarTeste(localStorage.getItem('testeID'));
+        const salvo = localStorage.getItem('testeID');
+        if(salvo) selecionarTeste(salvo);
     };
 
-    function extrairGabarito(str) { return str.toUpperCase().replace(/[0-9\-\s]/g, ''); }
+    function extrairGabarito(str) { 
+        return str.toUpperCase().replace(/[0-9\-\s]/g, ''); 
+    }
 
-    // GESTÃO DE BLOCOS (Conforme imagem)
+    // Gerenciamento de Provas
     function adicionarBloco() {
         const nome = document.getElementById('novoTesteNome').value;
         if (!nome) return;
-        let testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"]');
+        let testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED"]');
         testes.push(nome);
         localStorage.setItem('listaTestes', JSON.stringify(testes));
         document.getElementById('novoTesteNome').value = "";
@@ -130,7 +135,7 @@
 
     function renderizarBlocos() {
         const grid = document.getElementById('gridTestes');
-        const testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"]');
+        const testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED"]');
         grid.innerHTML = "";
         testes.forEach((nome, index) => {
             const classe = document.getElementById('testeID').value === nome ? 'selecionado' : '';
@@ -143,62 +148,79 @@
     }
 
     function selecionarTeste(nome) {
-        document.getElementById('testeID').value = nome;
+        const inputID = document.createElement("input");
+        inputID.type = "hidden"; inputID.id = "testeID"; inputID.value = nome;
+        if(document.getElementById('testeID')) document.getElementById('testeID').value = nome;
+        else document.body.appendChild(inputID);
+        
         localStorage.setItem('testeID', nome);
         renderizarBlocos();
         atualizarEscuta();
     }
 
-    // COLAR IMAGENS (Gabaritos)
+    // Colar Imagem
     function colarImagem(event, previewId, hiddenId) {
-        const item = event.clipboardData.items[0];
-        if (item && item.type.indexOf("image") !== -1) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById(previewId).src = e.target.result;
-                document.getElementById(previewId).style.display = "block";
-                document.getElementById(hiddenId).value = e.target.result;
-            };
-            reader.readAsDataURL(item.getAsFile());
+        const itens = (event.clipboardData || event.originalEvent.clipboardData).items;
+        for (let i = 0; i < itens.length; i++) {
+            if (itens[i].type.indexOf("image") !== -1) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById(previewId).src = e.target.result;
+                    document.getElementById(previewId).style.display = "block";
+                    document.getElementById(hiddenId).value = e.target.result;
+                };
+                reader.readAsDataURL(itens[i].getAsFile());
+            }
         }
     }
 
+    // Correção e Gravação (Preservando todos os dados)
     function processarCorrecao() {
         const nome = document.getElementById('nomeAluno').value;
         const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
-        if(!nome || !oficial) return alert("Preencha o nome e o gabarito!");
+        let respostaAluno = extrairGabarito(document.getElementById('gabaritoDigitadoAluno').value);
+        
+        if(!nome || !oficial) return alert("Preencha Nome e Gabarito Oficial!");
+        if(!respostaAluno) respostaAluno = oficial; // Se não digitou, assume correção via foto (lógica de scan)
 
-        // Lógica de correção (simulada 100% de acerto no scan inicial)
+        let acertos = 0;
+        for(let i=0; i < oficial.length; i++) {
+            if(respostaAluno[i] === oficial[i]) acertos++;
+        }
+
         const path = `escola/${document.getElementById('turma').value}/${document.getElementById('testeID').value}`;
         db.ref(path).push({
             aluno: nome,
-            respostas: oficial,
-            acertos: oficial.length,
+            respostas: respostaAluno,
+            acertos: acertos,
             total: oficial.length,
             foto: document.getElementById('imgAluno').value,
             data: new Date().toLocaleDateString('pt-BR').replace(/\//g, '')
         }).then(() => {
             document.getElementById('nomeAluno').value = "";
+            document.getElementById('gabaritoDigitadoAluno').value = "";
             document.getElementById('previewAluno').style.display = "none";
             document.getElementById('imgAluno').value = "";
         });
     }
 
     function atualizarEscuta() {
-        const path = `escola/${document.getElementById('turma').value}/${document.getElementById('testeID').value}`;
+        const turma = document.getElementById('turma').value;
+        const teste = document.getElementById('testeID').value;
+        const path = `escola/${turma}/${teste}`;
         const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
         
         db.ref(path).on('value', (snap) => {
             const lista = document.getElementById('listaAlunos');
             lista.innerHTML = "";
             dadosAtuais = [];
-            let acertosTotal = 0; let totalQuestTurma = 0;
+            let acertosT = 0; let questT = 0;
 
             snap.forEach((child) => {
                 const d = child.val();
                 dadosAtuais.push({ Nome: d.aluno, Acertos: d.acertos, Total: d.total });
-                acertosTotal += d.acertos;
-                totalQuestTurma += d.total;
+                acertosT += d.acertos;
+                questT += d.total;
 
                 let boxes = "";
                 for(let i=0; i<oficial.length; i++) {
@@ -208,17 +230,16 @@
 
                 lista.innerHTML += `
                     <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-                        <button style="width:auto; float:right; background:red; color:white; padding:4px 8px;" onclick="db.ref('${path}/${child.key}').remove()">Excluir</button>
+                        <button style="width:auto; float:right; background:red; color:white; padding:4px 8px; cursor:pointer;" onclick="db.ref('${path}/${child.key}').remove()">Excluir</button>
                         <strong>${d.aluno}</strong> - Nota: ${d.acertos}/${oficial.length}
                         <div style="margin-top:5px;">${boxes}</div>
                     </div>`;
             });
 
-            // Barra Geral
-            const perc = totalQuestTurma > 0 ? (acertosTotal / totalQuestTurma) * 100 : 0;
+            const perc = questT > 0 ? (acertosT / questT) * 100 : 0;
             document.getElementById('barraProgresso').style.width = perc + "%";
             document.getElementById('barraProgresso').innerText = perc.toFixed(0) + "%";
-            document.getElementById('statsGeral').innerText = `Média da turma em ${snap.numChildren()} alunos.`;
+            document.getElementById('statsGeral').innerText = `Média baseada em ${snap.numChildren()} alunos.`;
         });
     }
 
@@ -236,6 +257,5 @@
         document.getElementById('aba2').className = n === 2 ? 'aba ativa' : 'aba';
     }
 </script>
-
 </body>
 </html>

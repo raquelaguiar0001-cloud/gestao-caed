@@ -11,21 +11,22 @@
         .container { width: 100%; max-width: 600px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         
+        /* Blocos de Provas conforme rascunho */
         .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
         .prova-bloco { position: relative; border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; transition: 0.3s; min-height: 50px; display: flex; align-items: center; justify-content: center; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
-        .btn-excluir-bloco { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; border: none; cursor: pointer; z-index: 10; }
-
+        
         .aba-container { display: flex; gap: 10px; margin-bottom: 10px; width: 100%; }
         .aba { flex: 1; padding: 12px; text-align: center; cursor: pointer; background: #ddd; border-radius: 8px; font-weight: bold; }
         .aba.ativa { background: #007bff; color: white; }
 
         .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; font-size: 13px; }
         
-        /* ESTILO DOS QUADRADINHOS */
-        .questao-box { display: inline-block; width: 30px; height: 30px; line-height: 30px; text-align: center; margin: 4px; border-radius: 6px; font-weight: bold; color: white; font-size: 13px; }
-        .acerto { background: #28a745 !important; border: 2px solid #1e7e34; }
-        .erro { background: #dc3545 !important; border: 2px solid #bd2130; }
+        /* Estilo dos Quadradinhos Corrigido */
+        .grade-questoes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+        .questao-box { width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 4px; font-weight: bold; color: white; font-size: 11px; }
+        .acerto { background: #28a745; border: 1px solid #1e7e34; }
+        .erro { background: #dc3545; border: 1px solid #bd2130; }
         
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
         .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
@@ -42,20 +43,9 @@
             <option value="9ano">9º Ano</option>
         </select>
 
-        <div style="display: flex; gap: 5px; margin-top: 10px;">
-            <input type="text" id="novoTesteNome" placeholder="Nova Prova">
-            <button onclick="adicionarBloco()" style="width: 60px; background: #007bff; color: white;">+</button>
-        </div>
-
         <div id="gridTestes" class="prova-grid"></div>
-
-        <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewOficial', 'imgOficial')">
-            <span>Cole (Ctrl+V) a FOTO DO GABARITO OFICIAL</span>
-            <img id="previewOficial" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
-            <input type="hidden" id="imgOficial">
-        </div>
         
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Ex: 1A2B3C...)" oninput="salvarGabarito()">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Ex: 1A 2B 3C...)" oninput="salvarGabarito()" style="margin-top: 15px; border: 2px solid #007bff;">
     </div>
 
     <div class="card">
@@ -63,12 +53,12 @@
         <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
         
         <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
-            <span>Cole (Ctrl+V) a FOTO DO ALUNO</span>
+            <span>Clique aqui e Cole (Ctrl+V) a FOTO DO ALUNO</span>
             <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
             <input type="hidden" id="imgAluno">
         </div>
 
-        <input type="text" id="gabaritoDigitadoAluno" placeholder="Gabarito do aluno (Ex: 1D2C...)">
+        <input type="text" id="gabaritoDigitadoAluno" placeholder="Gabarito do aluno (Ex: 1D 2C...)">
 
         <button class="btn-foto" onclick="processarCorrecao()">✅ SALVAR E CORRIGIR AGORA</button>
     </div>
@@ -80,16 +70,20 @@
 
     <div id="contAba1" class="card">
         <button class="btn-excel" onclick="exportarExcel()">📥 Baixar Lista Excel</button>
-        <div id="listaAlunos" style="margin-top: 15px;">Aguardando dados...</div>
+        <div id="listaAlunos" style="margin-top: 15px;">Carregando dados...</div>
     </div>
 
     <div id="contAba2" class="card" style="display:none;">
-        <div id="barraProgresso" style="background: #28a745; height: 35px; width: 0%; color: white; text-align: center; line-height: 35px; border-radius: 20px;">0%</div>
-        <p id="statsGeral" style="text-align: center; margin-top: 10px;"></p>
+        <h4>Progresso Geral da Turma</h4>
+        <div style="background: #eee; border-radius: 20px; height: 35px; width: 100%; overflow: hidden; margin: 15px 0; border: 1px solid #ccc;">
+            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; transition: 0.8s; text-align: center; color: white; line-height: 35px; font-weight: bold;">0%</div>
+        </div>
+        <p id="statsGeral" style="text-align: center; font-size: 14px; color: #666;"></p>
     </div>
 </div>
 
 <script>
+    // Configuração Firebase
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -102,8 +96,9 @@
         document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
     };
 
-    function extrairGabarito(str) { 
-        return str ? str.toUpperCase().replace(/[0-9\-\s]/g, '') : ""; 
+    // Função que limpa números, traços e espaços, deixando só as letras
+    function limparGabarito(str) { 
+        return str ? str.toUpperCase().replace(/[^A-E]/g, '') : ""; 
     }
 
     function salvarGabarito() {
@@ -111,20 +106,11 @@
         atualizarEscuta();
     }
 
-    function adicionarBloco() {
-        const nome = document.getElementById('novoTesteNome').value;
-        if (!nome) return;
-        let testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED"]');
-        testes.push(nome);
-        localStorage.setItem('listaTestes', JSON.stringify(testes));
-        renderizarBlocos();
-    }
-
     function renderizarBlocos() {
         const grid = document.getElementById('gridTestes');
-        const testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED"]');
+        const testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"]');
         grid.innerHTML = "";
-        testes.forEach((nome, index) => {
+        testes.forEach(nome => {
             const sel = localStorage.getItem('testeID') === nome ? 'selecionado' : '';
             grid.innerHTML += `<div class="prova-bloco ${sel}" onclick="selecionarTeste('${nome}')">${nome}</div>`;
         });
@@ -137,7 +123,7 @@
     }
 
     function colarImagem(event, previewId, hiddenId) {
-        const item = (event.clipboardData || event.originalEvent.clipboardData).items[0];
+        const item = event.clipboardData.items[0];
         if (item && item.type.indexOf("image") !== -1) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -151,12 +137,12 @@
 
     function processarCorrecao() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
+        const oficial = limparGabarito(document.getElementById('gabaritoOficial').value);
         const alunoRaw = document.getElementById('gabaritoDigitadoAluno').value;
-        let respostaAluno = extrairGabarito(alunoRaw);
+        const respostaAluno = limparGabarito(alunoRaw);
         const testeID = localStorage.getItem('testeID');
 
-        if(!nome || !oficial) return alert("Preencha Nome e Gabarito Oficial!");
+        if(!nome || !oficial || !testeID) return alert("Preencha o Nome e o Gabarito Oficial acima!");
 
         let acertos = 0;
         for(let i=0; i < oficial.length; i++) {
@@ -172,13 +158,14 @@
         }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('gabaritoDigitadoAluno').value = "";
+            alert("Salvo!");
         });
     }
 
     function atualizarEscuta() {
         const turma = document.getElementById('turma').value;
         const testeID = localStorage.getItem('testeID');
-        const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
+        const oficial = limparGabarito(document.getElementById('gabaritoOficial').value);
         
         if(!testeID) return;
 
@@ -186,25 +173,36 @@
             const lista = document.getElementById('listaAlunos');
             lista.innerHTML = "";
             dadosAtuais = [];
-            
+            let somaAcertos = 0; let somaTotal = 0;
+
             snap.forEach((child) => {
                 const d = child.val();
-                dadosAtuais.push({ Nome: d.aluno, Acertos: d.acertos });
+                dadosAtuais.push({ Nome: d.aluno, Acertos: d.acertos, Total: oficial.length });
+                
+                somaAcertos += d.acertos;
+                somaTotal += oficial.length;
 
                 let boxes = "";
-                // Aqui a mágica acontece: comparamos letra por letra do que foi salvo
+                // Criar os quadradinhos baseados no gabarito oficial atual
                 for(let i=0; i < oficial.length; i++) {
                     const letraAluno = (d.respostas && d.respostas[i]) ? d.respostas[i] : "?";
-                    const classe = letraAluno === oficial[i] ? 'acerto' : 'erro';
-                    boxes += `<div class="questao-box ${classe}">${i+1}</div>`;
+                    const status = letraAluno === oficial[i] ? 'acerto' : 'erro';
+                    boxes += `<div class="questao-box ${status}">${i+1}</div>`;
                 }
 
                 lista.innerHTML += `
-                    <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-                        <strong>${d.aluno}</strong> - Acertos: ${d.acertos}/${oficial.length}
-                        <div style="margin-top:5px;">${boxes}</div>
+                    <div style="border-bottom: 1px solid #eee; padding: 15px 0;">
+                        <button style="float:right; width:auto; background:red; color:white; padding:5px;" onclick="db.ref('escola/${turma}/${testeID}/${child.key}').remove()">Excluir</button>
+                        <strong>${d.aluno}</strong> - Resultado: ${d.acertos}/${oficial.length}
+                        <div class="grade-questoes">${boxes}</div>
                     </div>`;
             });
+
+            // Atualizar Desempenho Geral (Barra)
+            const porcentagem = somaTotal > 0 ? (somaAcertos / somaTotal) * 100 : 0;
+            document.getElementById('barraProgresso').style.width = porcentagem + "%";
+            document.getElementById('barraProgresso').innerText = Math.round(porcentagem) + "%";
+            document.getElementById('statsGeral').innerText = `Média da Turma: ${Math.round(porcentagem)}% (${snap.numChildren()} alunos)`;
         });
     }
 
@@ -219,7 +217,7 @@
         const ws = XLSX.utils.json_to_sheet(dadosAtuais);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Notas");
-        XLSX.writeFile(wb, "Relatorio.xlsx");
+        XLSX.writeFile(wb, `Resultado_${localStorage.getItem('testeID')}.xlsx`);
     }
 </script>
 </body>

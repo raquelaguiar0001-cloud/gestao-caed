@@ -15,7 +15,6 @@
         .prova-bloco { border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; min-height: 50px; display: flex; align-items: center; justify-content: center; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
 
-        /* Área de foto recuperada */
         .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; font-size: 13px; }
         
         .aba-container { display: flex; gap: 10px; margin-bottom: 10px; width: 100%; }
@@ -23,11 +22,11 @@
         .aba.ativa { background: #007bff; color: white; }
         
         .grade-questoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-        .questao-box { width: 35px; height: 35px; line-height: 35px; text-align: center; border-radius: 6px; font-weight: bold; color: white; font-size: 14px; }
+        .questao-box { width: 35px; height: 35px; line-height: 35px; text-align: center; border-radius: 6px; font-weight: bold; color: white !important; font-size: 14px; }
         
-        /* Verde e Vermelho garantidos */
-        .acerto { background-color: #28a745 !important; border: 1px solid #1e7e34; }
-        .erro { background-color: #dc3545 !important; border: 1px solid #bd2130; }
+        /* CORES COM FORÇA TOTAL */
+        .acerto { background-color: #28a745 !important; border: 1px solid #1e7e34 !important; }
+        .erro { background-color: #dc3545 !important; border: 1px solid #bd2130 !important; }
         
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
         .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
@@ -77,13 +76,13 @@
 
     <div id="contAba1" class="card">
         <button class="btn-excel" onclick="exportarExcel()">📥 Baixar Lista Excel</button>
-        <div id="listaAlunos" style="margin-top: 15px;">Aguardando...</div>
+        <div id="listaAlunos" style="margin-top: 15px;">Sincronizando...</div>
     </div>
 
     <div id="contAba2" class="card" style="display:none;">
-        <h4>Progresso Geral da Turma</h4>
-        <div style="background: #eee; border-radius: 20px; height: 35px; width: 100%; overflow: hidden; margin: 15px 0; border: 1px solid #ccc;">
-            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; transition: 0.8s; text-align: center; color: white; line-height: 35px; font-weight: bold;">0%</div>
+        <h4>Média Geral da Turma</h4>
+        <div style="background: #eee; border-radius: 20px; height: 35px; width: 100%; overflow: hidden; margin: 15px 0;">
+            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; text-align: center; color: white; line-height: 35px; font-weight: bold;">0%</div>
         </div>
         <p id="statsGeral" style="text-align: center; font-weight: bold;"></p>
     </div>
@@ -100,7 +99,8 @@
         document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
     };
 
-    function limparParaLetras(txt) {
+    // Função vital para ignorar números e traços
+    function apenasLetras(txt) {
         return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : "";
     }
 
@@ -140,22 +140,22 @@
 
     function processarCorrecao() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const oficial = limparParaLetras(document.getElementById('gabaritoOficial').value);
-        const alunoRes = limparParaLetras(document.getElementById('gabaritoDigitadoAluno').value);
+        const oficial = apenasLetras(document.getElementById('gabaritoOficial').value);
+        const alunoRes = apenasLetras(document.getElementById('gabaritoDigitadoAluno').value);
         const testeID = localStorage.getItem('testeID');
         const turma = document.getElementById('turma').value;
 
-        if(!nome || oficial.length === 0) return alert("Preencha o Nome e o Gabarito Oficial!");
+        if(!nome || oficial.length === 0) return alert("Erro: Preencha Nome e Gabarito!");
 
-        let acertosCount = 0;
+        let acertos = 0;
         for(let i=0; i < oficial.length; i++) {
-            if(alunoRes[i] === oficial[i]) acertosCount++;
+            if(alunoRes[i] === oficial[i]) acertos++;
         }
 
         db.ref(`escola/${turma}/${testeID}`).push({
             aluno: nome,
             respostas: alunoRes,
-            acertos: acertosCount,
+            acertos: acertos,
             total: oficial.length
         }).then(() => {
             document.getElementById('nomeAluno').value = "";
@@ -167,7 +167,7 @@
     function atualizarEscuta() {
         const turma = document.getElementById('turma').value;
         const testeID = localStorage.getItem('testeID');
-        const oficial = limparParaLetras(document.getElementById('gabaritoOficial').value);
+        const oficial = apenasLetras(document.getElementById('gabaritoOficial').value);
         
         if(!testeID) return;
 
@@ -178,18 +178,19 @@
 
             snap.forEach((child) => {
                 const d = child.val();
-                const resA = limparParaLetras(d.respostas);
+                const resLimpa = apenasLetras(d.respostas);
                 const totalQ = oficial.length || 12;
                 
                 let acertosCalculados = 0;
                 let boxes = "";
                 for(let i=0; i < totalQ; i++) {
-                    const letraA = resA[i] || "";
+                    const letraA = resLimpa[i] || "";
                     const letraO = oficial[i] || "";
-                    const isCorreto = (letraA !== "" && letraA === letraO);
-                    if(isCorreto) acertosCalculados++;
-                    const cor = isCorreto ? "acerto" : "erro";
-                    boxes += `<div class="questao-box ${cor}">${i+1}</div>`;
+                    const correto = (letraA !== "" && letraA === letraO);
+                    if(correto) acertosCalculados++;
+                    
+                    const corClasse = correto ? "acerto" : "erro";
+                    boxes += `<div class="questao-box ${corClasse}">${i+1}</div>`;
                 }
 
                 somaAcertos += acertosCalculados;
@@ -226,8 +227,8 @@
             snap.forEach(c => { dados.push({ Nome: c.val().aluno, Pontos: c.val().acertos }); });
             const ws = XLSX.utils.json_to_sheet(dados);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Resultado");
-            XLSX.writeFile(wb, `Lista_${testeID}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Notas");
+            XLSX.writeFile(wb, `Resultado_${testeID}.xlsx`);
         });
     }
 </script>

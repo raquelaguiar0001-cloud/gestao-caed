@@ -11,7 +11,7 @@
         .container { width: 100%; max-width: 600px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         
-        /* Grid de Blocos de Provas conforme rascunho */
+        /* Grid de Blocos conforme rascunho */
         .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
         .prova-bloco { position: relative; border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; transition: 0.3s; min-height: 50px; display: flex; align-items: center; justify-content: center; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
@@ -26,9 +26,10 @@
         .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; font-size: 13px; }
         .upload-area:focus { border-color: #007bff; outline: none; background: #eef6ff; }
         
-        .questao-box { display: inline-block; width: 25px; height: 25px; line-height: 25px; text-align: center; margin: 2px; border-radius: 4px; font-weight: bold; color: white; font-size: 11px; }
-        .acerto { background: #28a745; }
-        .erro { background: #dc3545; }
+        /* Visualização de Questões */
+        .questao-box { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; margin: 3px; border-radius: 6px; font-weight: bold; color: white; font-size: 12px; }
+        .acerto { background: #28a745; border: 1px solid #1e7e34; }
+        .erro { background: #dc3545; border: 1px solid #bd2130; }
         
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
         .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
@@ -62,7 +63,7 @@
     </div>
 
     <div class="card">
-        <strong>📸 Scanner e Entrada do Aluno</strong>
+        <strong>📸 Entrada de Dados do Aluno</strong>
         <input type="text" id="nomeAluno" placeholder="Nome completo do Aluno">
         
         <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
@@ -96,6 +97,7 @@
 </div>
 
 <script>
+    // Configuração do Firebase
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -119,7 +121,6 @@
         atualizarEscuta();
     }
 
-    // Gerenciamento de Provas (Blocos do Rascunho)
     function adicionarBloco() {
         const nome = document.getElementById('novoTesteNome').value;
         if (!nome) return;
@@ -159,7 +160,6 @@
         atualizarEscuta();
     }
 
-    // Função para colar imagem (Ctrl+V)
     function colarImagem(event, previewId, hiddenId) {
         const itens = (event.clipboardData || event.originalEvent.clipboardData).items;
         for (let i = 0; i < itens.length; i++) {
@@ -175,22 +175,16 @@
         }
     }
 
-    // Processamento da Correção
     function processarCorrecao() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const gabOficialRaw = document.getElementById('gabaritoOficial').value;
-        const oficial = extrairGabarito(gabOficialRaw);
+        const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
         const alunoRaw = document.getElementById('gabaritoDigitadoAluno').value;
         let respostaAluno = extrairGabarito(alunoRaw);
-        
         const testeID = localStorage.getItem('testeID');
 
-        if(!nome) return alert("Por favor, digite o Nome do Aluno.");
-        if(!oficial) return alert("Por favor, preencha o Gabarito Oficial acima.");
-        if(!testeID) return alert("Selecione um bloco de teste (8º ou 9º ano).");
+        if(!nome || !oficial || !testeID) return alert("Verifique: Nome do Aluno, Gabarito Oficial e Bloco Selecionado.");
 
-        // Se o campo do aluno estiver vazio, o sistema assume acerto total (correção manual via imagem)
-        if(!respostaAluno) respostaAluno = oficial;
+        if(!respostaAluno) respostaAluno = oficial; // Simulação de acerto total se não digitar
 
         let acertos = 0;
         for(let i=0; i < oficial.length; i++) {
@@ -198,7 +192,7 @@
         }
 
         const turma = document.getElementById('turma').value;
-        const dataSimples = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+        const dataNumerica = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
 
         db.ref(`escola/${turma}/${testeID}`).push({
             aluno: nome,
@@ -206,13 +200,12 @@
             acertos: acertos,
             total: oficial.length,
             foto: document.getElementById('imgAluno').value,
-            data: dataSimples
+            data: dataNumerica
         }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('gabaritoDigitadoAluno').value = "";
             document.getElementById('previewAluno').style.display = "none";
             document.getElementById('imgAluno').value = "";
-            alert("Salvo com sucesso!");
         });
     }
 
@@ -235,29 +228,29 @@
                 acertosT += d.acertos;
                 questT += d.total;
 
+                // GERAÇÃO DOS QUADRADINHOS DE ACERTO/ERRO
                 let boxes = "";
-                for(let i=0; i<oficial.length; i++) {
-                    const status = d.respostas[i] === oficial[i] ? 'acerto' : 'erro';
+                for(let i=0; i < oficial.length; i++) {
+                    const status = (d.respostas && d.respostas[i] === oficial[i]) ? 'acerto' : 'erro';
                     boxes += `<div class="questao-box ${status}">${i+1}</div>`;
                 }
 
                 lista.innerHTML += `
-                    <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                    <div style="border-bottom: 1px solid #eee; padding: 15px 0;">
                         <button style="width:auto; float:right; background:red; color:white; padding:4px 8px; cursor:pointer;" onclick="db.ref('escola/${turma}/${testeID}/${child.key}').remove()">Excluir</button>
-                        <strong>${d.aluno}</strong> - Resultado: ${d.acertos}/${oficial.length}
-                        <div style="margin-top:5px;">${boxes}</div>
+                        <strong>${d.aluno}</strong> - Nota: ${d.acertos}/${oficial.length}
+                        <div style="margin-top:8px; display: flex; flex-wrap: wrap;">${boxes}</div>
                     </div>`;
             });
 
             const perc = questT > 0 ? (acertosT / questT) * 100 : 0;
             document.getElementById('barraProgresso').style.width = perc + "%";
             document.getElementById('barraProgresso').innerText = perc.toFixed(0) + "%";
-            document.getElementById('statsGeral').innerText = `Média da turma: ${snap.numChildren()} alunos avaliados.`;
+            document.getElementById('statsGeral').innerText = `Média: ${snap.numChildren()} alunos.`;
         });
     }
 
     function exportarExcel() {
-        if(dadosAtuais.length === 0) return alert("Não há dados para exportar.");
         const ws = XLSX.utils.json_to_sheet(dadosAtuais);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Notas");
@@ -269,6 +262,10 @@
         document.getElementById('contAba2').style.display = n === 2 ? 'block' : 'none';
         document.getElementById('aba1').className = n === 1 ? 'aba ativa' : 'aba';
         document.getElementById('aba2').className = n === 2 ? 'aba ativa' : 'aba';
+    }
+
+    function trocarPasta() {
+        atualizarEscuta();
     }
 </script>
 </body>

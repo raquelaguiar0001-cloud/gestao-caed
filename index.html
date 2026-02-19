@@ -10,32 +10,23 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 600px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
-        
         .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
         .prova-bloco { border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; min-height: 50px; display: flex; align-items: center; justify-content: center; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
-
         .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; font-size: 13px; }
-        
         .aba-container { display: flex; gap: 10px; margin-bottom: 10px; width: 100%; }
         .aba { flex: 1; padding: 12px; text-align: center; cursor: pointer; background: #ddd; border-radius: 8px; font-weight: bold; }
         .aba.ativa { background: #007bff; color: white; }
-        
         .grade-questoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
         .questao-box { width: 35px; height: 35px; line-height: 35px; text-align: center; border-radius: 6px; font-weight: bold; color: white !important; font-size: 14px; }
-        
-        /* CORES COM FORÇA TOTAL */
         .acerto { background-color: #28a745 !important; border: 1px solid #1e7e34 !important; }
         .erro { background-color: #dc3545 !important; border: 1px solid #bd2130 !important; }
-        
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
         .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
-        .btn-excel { background: #1d6f42; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-excluir { background: #ff4d4d; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; float: right; font-weight: bold; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="card">
         <h3>📂 Configuração do Teste</h3>
@@ -43,29 +34,24 @@
             <option value="8ano">8º Ano</option>
             <option value="9ano">9º Ano</option>
         </select>
-
         <div id="gridTestes" class="prova-grid"></div>
-        
         <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewOficial', 'imgOficial')">
             <span>Clique aqui e Cole (Ctrl+V) a FOTO DO GABARITO OFICIAL</span>
             <img id="previewOficial" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
             <input type="hidden" id="imgOficial">
         </div>
-
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (ABCD...)" oninput="salvarGabarito()" style="margin-top: 15px; border: 2px solid #007bff;">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Ex: ABCDE...)" oninput="salvarGabarito()" style="margin-top: 15px; border: 2px solid #007bff;">
     </div>
 
     <div class="card">
         <strong>📸 Scanner e Entrada do Aluno</strong>
         <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        
         <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
             <span>Clique aqui e Cole (Ctrl+V) a FOTO DO ALUNO</span>
             <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
             <input type="hidden" id="imgAluno">
         </div>
-
-        <input type="text" id="gabaritoDigitadoAluno" placeholder="Respostas do aluno (Ex: 1D 2C...)">
+        <input type="text" id="gabaritoDigitadoAluno" placeholder="Respostas (Ex: 1A 2B ou ABCD)">
         <button class="btn-foto" onclick="processarCorrecao()">✅ SALVAR E CORRIGIR AGORA</button>
     </div>
 
@@ -74,18 +60,8 @@
         <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho</div>
     </div>
 
-    <div id="contAba1" class="card">
-        <button class="btn-excel" onclick="exportarExcel()">📥 Baixar Lista Excel</button>
-        <div id="listaAlunos" style="margin-top: 15px;">Sincronizando...</div>
-    </div>
-
-    <div id="contAba2" class="card" style="display:none;">
-        <h4>Média Geral da Turma</h4>
-        <div style="background: #eee; border-radius: 20px; height: 35px; width: 100%; overflow: hidden; margin: 15px 0;">
-            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; text-align: center; color: white; line-height: 35px; font-weight: bold;">0%</div>
-        </div>
-        <p id="statsGeral" style="text-align: center; font-weight: bold;"></p>
-    </div>
+    <div id="contAba1" class="card"><div id="listaAlunos">Sincronizando...</div></div>
+    <div id="contAba2" class="card" style="display:none;"><div id="barraProgresso" style="background: #28a745; height: 30px; width: 0%; color: white; text-align: center; border-radius: 5px;">0%</div><p id="statsGeral" style="text-align: center; margin-top:10px;"></p></div>
 </div>
 
 <script>
@@ -93,16 +69,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Função que garante que só sobram as letras A, B, C, D ou E
+    function limparDados(txt) { 
+        return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : ""; 
+    }
+
     window.onload = () => {
         renderizarBlocos();
         selecionarTeste(localStorage.getItem('testeID') || "Teste 01 CAED");
         document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
     };
-
-    // Função vital para ignorar números e traços
-    function apenasLetras(txt) {
-        return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : "";
-    }
 
     function salvarGabarito() {
         localStorage.setItem('gabaritoOficial', document.getElementById('gabaritoOficial').value);
@@ -140,23 +116,17 @@
 
     function processarCorrecao() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const oficial = apenasLetras(document.getElementById('gabaritoOficial').value);
-        const alunoRes = apenasLetras(document.getElementById('gabaritoDigitadoAluno').value);
+        const oficial = limparDados(document.getElementById('gabaritoOficial').value);
+        const alunoRes = limparDados(document.getElementById('gabaritoDigitadoAluno').value);
         const testeID = localStorage.getItem('testeID');
         const turma = document.getElementById('turma').value;
 
-        if(!nome || oficial.length === 0) return alert("Erro: Preencha Nome e Gabarito!");
+        if(!nome || oficial.length === 0) return alert("Preencha Nome e Gabarito Oficial!");
 
-        let acertos = 0;
-        for(let i=0; i < oficial.length; i++) {
-            if(alunoRes[i] === oficial[i]) acertos++;
-        }
-
+        // Salvando já limpo para não ter erro de comparação depois
         db.ref(`escola/${turma}/${testeID}`).push({
             aluno: nome,
-            respostas: alunoRes,
-            acertos: acertos,
-            total: oficial.length
+            respostas: alunoRes 
         }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('gabaritoDigitadoAluno').value = "";
@@ -167,10 +137,8 @@
     function atualizarEscuta() {
         const turma = document.getElementById('turma').value;
         const testeID = localStorage.getItem('testeID');
-        const oficial = apenasLetras(document.getElementById('gabaritoOficial').value);
+        const oficial = limparDados(document.getElementById('gabaritoOficial').value);
         
-        if(!testeID) return;
-
         db.ref(`escola/${turma}/${testeID}`).on('value', (snap) => {
             const lista = document.getElementById('listaAlunos');
             lista.innerHTML = "";
@@ -178,37 +146,34 @@
 
             snap.forEach((child) => {
                 const d = child.val();
-                const resLimpa = apenasLetras(d.respostas);
-                const totalQ = oficial.length || 12;
-                
-                let acertosCalculados = 0;
+                const resA = limparDados(d.respostas);
+                let acertosCalc = 0;
                 let boxes = "";
-                for(let i=0; i < totalQ; i++) {
-                    const letraA = resLimpa[i] || "";
-                    const letraO = oficial[i] || "";
-                    const correto = (letraA !== "" && letraA === letraO);
-                    if(correto) acertosCalculados++;
+                
+                // Compara letra por letra baseado no tamanho do oficial
+                for(let i=0; i < oficial.length; i++) {
+                    const letraAluno = resA[i] || "";
+                    const letraOficial = oficial[i];
+                    const correta = (letraAluno === letraOficial && letraAluno !== "");
                     
-                    const corClasse = correto ? "acerto" : "erro";
-                    boxes += `<div class="questao-box ${corClasse}">${i+1}</div>`;
+                    if(correta) acertosCalc++;
+                    boxes += `<div class="questao-box ${correta ? 'acerto' : 'erro'}">${i+1}</div>`;
                 }
 
-                somaAcertos += acertosCalculados;
-                somaTotal += totalQ;
+                somaAcertos += acertosCalc;
+                somaTotal += oficial.length;
 
                 lista.innerHTML += `
-                    <div style="border-bottom: 2px solid #f0f0f0; padding: 15px 0;">
+                    <div style="border-bottom: 2px solid #eee; padding: 15px 0;">
                         <button class="btn-excluir" onclick="db.ref('escola/${turma}/${testeID}/${child.key}').remove()">Excluir</button>
-                        <strong>${d.aluno}</strong> <br>
-                        <span>Pontuação: ${acertosCalculados} de ${totalQ}</span>
+                        <strong>${d.aluno}</strong> - Resultado: ${acertosCalc}/${oficial.length}
                         <div class="grade-questoes">${boxes}</div>
                     </div>`;
             });
-
-            const porc = somaTotal > 0 ? (somaAcertos / somaTotal) * 100 : 0;
-            document.getElementById('barraProgresso').style.width = porc + "%";
-            document.getElementById('barraProgresso').innerText = Math.round(porc) + "%";
-            document.getElementById('statsGeral').innerText = `Média: ${Math.round(porc)}% - Alunos: ${snap.numChildren()}`;
+            const p = somaTotal > 0 ? (somaAcertos/somaTotal)*100 : 0;
+            document.getElementById('barraProgresso').style.width = p+"%";
+            document.getElementById('barraProgresso').innerText = Math.round(p)+"%";
+            document.getElementById('statsGeral').innerText = `Média da Turma: ${Math.round(p)}% (${snap.numChildren()} alunos)`;
         });
     }
 
@@ -217,19 +182,6 @@
         document.getElementById('contAba2').style.display = n === 2 ? 'block' : 'none';
         document.getElementById('aba1').className = n === 1 ? 'aba ativa' : 'aba';
         document.getElementById('aba2').className = n === 2 ? 'aba ativa' : 'aba';
-    }
-
-    function exportarExcel() {
-        const turma = document.getElementById('turma').value;
-        const testeID = localStorage.getItem('testeID');
-        db.ref(`escola/${turma}/${testeID}`).once('value', (snap) => {
-            let dados = [];
-            snap.forEach(c => { dados.push({ Nome: c.val().aluno, Pontos: c.val().acertos }); });
-            const ws = XLSX.utils.json_to_sheet(dados);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Notas");
-            XLSX.writeFile(wb, `Resultado_${testeID}.xlsx`);
-        });
     }
 </script>
 </body>

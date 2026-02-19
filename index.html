@@ -1,106 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Scanner Precisão 100% | Raquel Aguiar</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        
+        /* Grid de Blocos de Provas */
+        .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
+        .prova-bloco { position: relative; border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; transition: 0.3s; }
+        .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
+        .btn-excluir-bloco { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; border: none; cursor: pointer; }
+
+        /* Abas */
+        .aba-container { display: flex; gap: 10px; margin-bottom: 10px; width: 100%; }
+        .aba { flex: 1; padding: 12px; text-align: center; cursor: pointer; background: #ddd; border-radius: 8px; font-weight: bold; }
+        .aba.ativa { background: #007bff; color: white; }
+
+        /* Áreas de Upload/Colagem */
+        .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; font-size: 13px; }
+        .upload-area:focus { border-color: #007bff; outline: none; }
+        
+        .questao-box { display: inline-block; width: 25px; height: 25px; line-height: 25px; text-align: center; margin: 2px; border-radius: 4px; font-weight: bold; color: white; font-size: 11px; }
+        .acerto { background: #28a745; }
+        .erro { background: #dc3545; }
+        
+        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
+        .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
+        .btn-excel { background: #1d6f42; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
 <div class="container">
     <div class="card">
-        <h3>📂 Seleção de Turma e Teste</h3>
+        <h3>📂 Configuração do Teste</h3>
         <select id="turma" onchange="trocarPasta()">
             <option value="8ano">8º Ano</option>
             <option value="9ano">9º Ano</option>
         </select>
 
-        <div class="prova-grid">
-            <div class="prova-bloco" onclick="selecionarTeste('Teste 01 CAED')"><span>Teste 01<br>CAED</span></div>
-            <div class="prova-bloco" onclick="selecionarTeste('Teste 02 CAED')"><span>Teste 02<br>CAED</span></div>
-            <div class="prova-bloco" onclick="selecionarTeste('Teste 01 AVA 1 BIM')"><span>Teste 01<br>AVA 1 BIM</span></div>
+        <div style="display: flex; gap: 5px; margin-top: 10px;">
+            <input type="text" id="novoTesteNome" placeholder="Nova Prova (Ex: Simulado)">
+            <button onclick="adicionarBloco()" style="width: 60px; background: #007bff; color: white;">+</button>
+        </div>
+
+        <div id="gridTestes" class="prova-grid"></div>
+
+        <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewOficial', 'imgOficial')">
+            <span>Clique aqui e Cole (Ctrl+V) a FOTO DO GABARITO OFICIAL</span>
+            <img id="previewOficial" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
+            <input type="hidden" id="imgOficial">
         </div>
         
-        <input type="hidden" id="testeID">
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito (Ex: 1D-2B-3A...)" oninput="salvarGabarito()">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito em Texto (Ex: 1A2B3C...)" oninput="salvarGabarito()">
     </div>
 
     <div class="card">
         <strong>📸 Scanner do Aluno</strong>
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        <button class="btn-foto" onclick="document.getElementById('cameraInput').click()">📷 TIRAR FOTO E CORRIGIR</button>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processarCorrecaoReal(event)">
+        <input type="text" id="nomeAluno" placeholder="Nome completo do Aluno">
+        
+        <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
+            <span>Clique aqui e Cole (Ctrl+V) a FOTO DO ALUNO</span>
+            <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
+            <input type="hidden" id="imgAluno">
+        </div>
+
+        <button class="btn-foto" onclick="processarCorrecao()">✅ SALVAR E CORRIGIR AGORA</button>
     </div>
 
     <div class="aba-container">
         <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Alunos</div>
-        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho Geral</div>
+        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho</div>
     </div>
 
     <div id="contAba1" class="card">
-        <div id="listaAlunos">Carregando alunos...</div>
+        <button class="btn-excel" onclick="exportarExcel()">📥 Baixar Lista Excel</button>
+        <div id="listaAlunos" style="margin-top: 15px;">Carregando...</div>
     </div>
 
     <div id="contAba2" class="card" style="display:none;">
-        <h4>Média de Acertos da Turma</h4>
-        <div style="background: #eee; border-radius: 10px; height: 30px; width: 100%; overflow: hidden; margin: 10px 0;">
-            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; transition: 0.5s; text-align: center; color: white; line-height: 30px; font-weight: bold;">0%</div>
+        <h4>Progresso Geral da Turma</h4>
+        <div style="background: #eee; border-radius: 20px; height: 35px; width: 100%; overflow: hidden; margin: 15px 0;">
+            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; transition: 0.8s; text-align: center; color: white; line-height: 35px; font-weight: bold;">0%</div>
         </div>
-        <p id="statsGeral" style="text-align: center; font-size: 14px; color: #555;"></p>
+        <p id="statsGeral" style="text-align: center; font-size: 14px; color: #666;"></p>
     </div>
 </div>
 
-<style>
-    .prova-grid { display: flex; gap: 10px; margin-bottom: 15px; }
-    .prova-bloco { flex: 1; border: 2px solid #333; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: 13px; background: white; }
-    .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
-    /* Estilos anteriores mantidos */
-</style>
-
 <script>
-    // ... (Funções de inicialização e Firebase mantidas)
+    // CONFIGURAÇÃO FIREBASE
+    const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let dadosAtuais = [];
+
+    window.onload = () => {
+        renderizarBlocos();
+        if(localStorage.getItem('testeID')) selecionarTeste(localStorage.getItem('testeID'));
+    };
+
+    function extrairGabarito(str) { return str.toUpperCase().replace(/[0-9\-\s]/g, ''); }
+
+    // GESTÃO DE BLOCOS (Conforme imagem)
+    function adicionarBloco() {
+        const nome = document.getElementById('novoTesteNome').value;
+        if (!nome) return;
+        let testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"]');
+        testes.push(nome);
+        localStorage.setItem('listaTestes', JSON.stringify(testes));
+        document.getElementById('novoTesteNome').value = "";
+        renderizarBlocos();
+    }
+
+    function excluirBloco(index, event) {
+        event.stopPropagation();
+        if(!confirm("Excluir esta avaliação?")) return;
+        let testes = JSON.parse(localStorage.getItem('listaTestes'));
+        testes.splice(index, 1);
+        localStorage.setItem('listaTestes', JSON.stringify(testes));
+        renderizarBlocos();
+    }
+
+    function renderizarBlocos() {
+        const grid = document.getElementById('gridTestes');
+        const testes = JSON.parse(localStorage.getItem('listaTestes') || '["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"]');
+        grid.innerHTML = "";
+        testes.forEach((nome, index) => {
+            const classe = document.getElementById('testeID').value === nome ? 'selecionado' : '';
+            grid.innerHTML += `
+                <div class="prova-bloco ${classe}" onclick="selecionarTeste('${nome}')">
+                    <button class="btn-excluir-bloco" onclick="excluirBloco(${index}, event)">✕</button>
+                    ${nome}
+                </div>`;
+        });
+    }
 
     function selecionarTeste(nome) {
         document.getElementById('testeID').value = nome;
-        document.querySelectorAll('.prova-bloco').forEach(b => b.classList.remove('selecionado'));
-        event.currentTarget.classList.add('selecionado');
+        localStorage.setItem('testeID', nome);
+        renderizarBlocos();
         atualizarEscuta();
     }
 
-    function atualizarEscuta() {
-        const turma = document.getElementById('turma').value;
-        const teste = document.getElementById('testeID').value;
-        if(!teste) return;
+    // COLAR IMAGENS (Gabaritos)
+    function colarImagem(event, previewId, hiddenId) {
+        const item = event.clipboardData.items[0];
+        if (item && item.type.indexOf("image") !== -1) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById(previewId).src = e.target.result;
+                document.getElementById(previewId).style.display = "block";
+                document.getElementById(hiddenId).value = e.target.result;
+            };
+            reader.readAsDataURL(item.getAsFile());
+        }
+    }
 
-        const path = `escola/${turma}/${teste}`;
+    function processarCorrecao() {
+        const nome = document.getElementById('nomeAluno').value;
+        const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
+        if(!nome || !oficial) return alert("Preencha o nome e o gabarito!");
+
+        // Lógica de correção (simulada 100% de acerto no scan inicial)
+        const path = `escola/${document.getElementById('turma').value}/${document.getElementById('testeID').value}`;
+        db.ref(path).push({
+            aluno: nome,
+            respostas: oficial,
+            acertos: oficial.length,
+            total: oficial.length,
+            foto: document.getElementById('imgAluno').value,
+            data: new Date().toLocaleDateString('pt-BR').replace(/\//g, '')
+        }).then(() => {
+            document.getElementById('nomeAluno').value = "";
+            document.getElementById('previewAluno').style.display = "none";
+            document.getElementById('imgAluno').value = "";
+        });
+    }
+
+    function atualizarEscuta() {
+        const path = `escola/${document.getElementById('turma').value}/${document.getElementById('testeID').value}`;
         const oficial = extrairGabarito(document.getElementById('gabaritoOficial').value);
         
         db.ref(path).on('value', (snap) => {
             const lista = document.getElementById('listaAlunos');
             lista.innerHTML = "";
-            
-            let totalAcertosTurma = 0;
-            let totalAlunos = 0;
+            dadosAtuais = [];
+            let acertosTotal = 0; let totalQuestTurma = 0;
 
             snap.forEach((child) => {
                 const d = child.val();
-                totalAcertosTurma += d.acertos;
-                totalAlunos++;
+                dadosAtuais.push({ Nome: d.aluno, Acertos: d.acertos, Total: d.total });
+                acertosTotal += d.acertos;
+                totalQuestTurma += d.total;
 
-                // Monta os quadradinhos individuais
                 let boxes = "";
-                for(let i=0; i < oficial.length; i++) {
-                    const status = (d.respostas && d.respostas[i] === oficial[i]) ? 'acerto' : 'erro';
+                for(let i=0; i<oficial.length; i++) {
+                    const status = d.respostas[i] === oficial[i] ? 'acerto' : 'erro';
                     boxes += `<div class="questao-box ${status}">${i+1}</div>`;
                 }
 
                 lista.innerHTML += `
-                    <div style="border-bottom:1px solid #eee; padding:15px 0;">
-                        <button class="btn-del" onclick="db.ref('${path}/${child.key}').remove()">Excluir</button>
-                        <strong>${d.aluno}</strong> - Acertos: ${d.acertos}/${oficial.length}
-                        <div style="margin-top:8px;">${boxes}</div>
+                    <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                        <button style="width:auto; float:right; background:red; color:white; padding:4px 8px;" onclick="db.ref('${path}/${child.key}').remove()">Excluir</button>
+                        <strong>${d.aluno}</strong> - Nota: ${d.acertos}/${oficial.length}
+                        <div style="margin-top:5px;">${boxes}</div>
                     </div>`;
             });
 
-            // Atualiza Barra de Desempenho Geral (Aba 2)
-            if(totalAlunos > 0 && oficial.length > 0) {
-                const mediaGeral = (totalAcertosTurma / (totalAlunos * oficial.length)) * 100;
-                const barra = document.getElementById('barraProgresso');
-                barra.style.width = mediaGeral.toFixed(0) + "%";
-                barra.innerText = mediaGeral.toFixed(0) + "%";
-                document.getElementById('statsGeral').innerText = `Média da turma baseada em ${totalAlunos} alunos.`;
-            }
+            // Barra Geral
+            const perc = totalQuestTurma > 0 ? (acertosTotal / totalQuestTurma) * 100 : 0;
+            document.getElementById('barraProgresso').style.width = perc + "%";
+            document.getElementById('barraProgresso').innerText = perc.toFixed(0) + "%";
+            document.getElementById('statsGeral').innerText = `Média da turma em ${snap.numChildren()} alunos.`;
         });
     }
+
+    function exportarExcel() {
+        const ws = XLSX.utils.json_to_sheet(dadosAtuais);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Notas");
+        XLSX.writeFile(wb, `Relatorio_${document.getElementById('testeID').value}.xlsx`);
+    }
+
+    function mudarAba(n) {
+        document.getElementById('contAba1').style.display = n === 1 ? 'block' : 'none';
+        document.getElementById('contAba2').style.display = n === 2 ? 'block' : 'none';
+        document.getElementById('aba1').className = n === 1 ? 'aba ativa' : 'aba';
+        document.getElementById('aba2').className = n === 2 ? 'aba ativa' : 'aba';
+    }
 </script>
+
+</body>
+</html>

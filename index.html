@@ -21,11 +21,12 @@
         .aba { flex: 1; padding: 12px; text-align: center; cursor: pointer; background: #ddd; border-radius: 8px; font-weight: bold; }
         .aba.ativa { background: #007bff; color: white; }
         
-        /* QUADRADINHOS GRANDES E CORES FORTES */
         .grade-questoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-        .questao-box { width: 35px; height: 35px; line-height: 35px; text-align: center; border-radius: 6px; font-weight: bold; color: white; font-size: 14px; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); }
-        .acerto { background-color: #28a745 !important; } /* Verde */
-        .erro { background-color: #dc3545 !important; }   /* Vermelho */
+        .questao-box { width: 35px; height: 35px; line-height: 35px; text-align: center; border-radius: 6px; font-weight: bold; color: white; font-size: 14px; }
+        
+        /* CORES CORRIGIDAS */
+        .acerto { background-color: #28a745 !important; border: 1px solid #1e7e34; }
+        .erro { background-color: #dc3545 !important; border: 1px solid #bd2130; }
         
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
         .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
@@ -51,7 +52,7 @@
             <input type="hidden" id="imgOficial">
         </div>
 
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Pode digitar 1A 2B ou apenas ABCD...)" oninput="salvarGabarito()" style="margin-top: 15px; border: 2px solid #007bff;">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Pode digitar 1A 2B ou ABCD...)" oninput="salvarGabarito()" style="margin-top: 15px; border: 2px solid #007bff;">
     </div>
 
     <div class="card">
@@ -80,10 +81,10 @@
 
     <div id="contAba2" class="card" style="display:none;">
         <h4>Média Geral da Turma</h4>
-        <div style="background: #eee; border-radius: 20px; height: 35px; width: 100%; overflow: hidden; margin: 15px 0; border: 1px solid #ccc;">
-            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; transition: 0.8s; text-align: center; color: white; line-height: 35px; font-weight: bold;">0%</div>
+        <div style="background: #eee; border-radius: 20px; height: 35px; width: 100%; overflow: hidden; margin: 15px 0;">
+            <div id="barraProgresso" style="background: #28a745; height: 100%; width: 0%; text-align: center; color: white; line-height: 35px; font-weight: bold;">0%</div>
         </div>
-        <p id="statsGeral" style="text-align: center; font-weight: bold; color: #333;"></p>
+        <p id="statsGeral" style="text-align: center; font-weight: bold;"></p>
     </div>
 </div>
 
@@ -100,8 +101,8 @@
         document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
     };
 
-    // FUNÇÃO VITAL: Remove números, espaços e traços. Ex: "1D 2B" vira "DB"
-    function extrairApenasLetras(texto) {
+    // Limpa números e traços para comparar apenas as letras
+    function extrairLetras(texto) {
         return texto ? texto.toUpperCase().replace(/[^A-E]/g, '') : "";
     }
 
@@ -141,8 +142,8 @@
 
     function processarCorrecao() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const oficial = extrairApenasLetras(document.getElementById('gabaritoOficial').value);
-        const alunoRes = extrairApenasLetras(document.getElementById('gabaritoDigitadoAluno').value);
+        const oficial = extrairLetras(document.getElementById('gabaritoOficial').value);
+        const alunoRes = extrairLetras(document.getElementById('gabaritoDigitadoAluno').value);
         const testeID = localStorage.getItem('testeID');
         const turma = document.getElementById('turma').value;
 
@@ -168,7 +169,8 @@
     function atualizarEscuta() {
         const turma = document.getElementById('turma').value;
         const testeID = localStorage.getItem('testeID');
-        const oficial = extrairApenasLetras(document.getElementById('gabaritoOficial').value);
+        const oficialInput = document.getElementById('gabaritoOficial').value;
+        const oficial = extrairLetras(oficialInput);
         
         if(!testeID) return;
 
@@ -187,13 +189,13 @@
                 somaTotal += totalQ;
 
                 let boxes = "";
-                // COMPARADOR CORRIGIDO: Letra por letra sem interferência de números
                 for(let i=0; i < totalQ; i++) {
                     const letraA = d.respostas ? d.respostas[i] : "";
                     const letraO = oficial[i] || "";
                     
-                    const cor = (letraA !== "" && letraA === letraO) ? "acerto" : "erro";
-                    boxes += `<div class="questao-box ${cor}">${i+1}</div>`;
+                    // Se as letras forem iguais, a classe 'acerto' pinta de VERDE
+                    const corClasse = (letraA !== "" && letraA === letraO) ? "acerto" : "erro";
+                    boxes += `<div class="questao-box ${corClasse}">${i+1}</div>`;
                 }
 
                 lista.innerHTML += `

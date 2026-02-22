@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Correção Raquel Aguiar</title>
+    <title>Scanner Pedagógico | Raquel Aguiar</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
@@ -10,30 +10,31 @@
         .container { width: 100%; max-width: 800px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        /* Seleção de Turma */
-        .turma-seletor { display: flex; gap: 10px; margin-bottom: 20px; }
+        /* Seletor de Turma */
+        .turma-seletor { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; }
         .btn-turma { flex: 1; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #ddd; font-size: 16px; }
         .btn-turma.ativa { background: #007bff; color: white; }
 
-        /* Abas de Visualização */
-        .abas-nav { display: flex; border-bottom: 2px solid #eee; margin-bottom: 15px; }
-        .aba-link { padding: 10px 20px; cursor: pointer; font-weight: 600; color: #666; }
-        .aba-link.ativa { color: #007bff; border-bottom: 3px solid #007bff; }
-
-        .upload-area { border: 2px dashed #007bff; padding: 20px; text-align: center; margin: 10px 0; border-radius: 10px; background: #f8fbff; cursor: pointer; }
-        .preview-img { max-width: 100%; max-height: 200px; margin-top: 10px; border-radius: 5px; display: none; }
+        /* Áreas de Upload (Colar Foto) */
+        .upload-area { border: 2px dashed #007bff; padding: 20px; text-align: center; margin: 10px 0; border-radius: 10px; background: #f8fbff; cursor: pointer; min-height: 60px; }
+        .preview-img { max-width: 100%; max-height: 250px; margin-top: 10px; border-radius: 8px; display: none; border: 1px solid #ddd; }
         
+        /* Visualização de Correção */
         .grade-questoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-        .questao-box { width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 5px; font-weight: bold; color: white; font-size: 12px; }
-        .acerto { background: #28a745; }
-        .erro { background: #dc3545; }
+        .questao-box { width: 32px; height: 32px; line-height: 32px; text-align: center; border-radius: 6px; font-weight: bold; color: white; font-size: 12px; }
+        .acerto { background: #28a745; border: 1px solid #1e7e34; }
+        .erro { background: #dc3545; border: 1px solid #bd2130; }
 
         input, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 10px; box-sizing: border-box; }
         .btn-principal { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
         
-        .rank-item { display: flex; align-items: center; margin-bottom: 10px; }
-        .barra-bg { background: #eee; height: 12px; flex: 1; border-radius: 6px; margin: 0 10px; overflow: hidden; }
-        .barra-fill { height: 100%; background: #dc3545; width: 0%; transition: 0.5s; }
+        .aba-nav { display: flex; gap: 10px; border-bottom: 2px solid #eee; margin-bottom: 15px; }
+        .aba-item { padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
+        .aba-item.ativa { color: #007bff; border-bottom: 3px solid #007bff; }
+        
+        .barra-bg { background: #eee; height: 12px; flex: 1; border-radius: 6px; overflow: hidden; }
+        .barra-fill { height: 100%; background: #dc3545; transition: 0.5s; }
+        .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -45,40 +46,43 @@
     </div>
 
     <div class="card">
-        <h3>Gabarito Oficial (<span id="txtTurma">8º Ano</span>)</h3>
-        <input type="text" id="oficialInput" placeholder="Cole o gabarito aqui (Pode ter números e espaços)" oninput="salvarOficial()">
+        <h3>1. Gabarito Oficial (<span id="txtTurma">8º Ano</span>)</h3>
+        <div class="upload-area" onpaste="colarImagem(event, 'previewOficial', 'imgOficialBase64', true)">
+            <span>Clique aqui e <b>Cole a Foto do Gabarito Oficial</b> (Ctrl+V)</span>
+            <img id="previewOficial" class="preview-img">
+            <input type="hidden" id="imgOficialBase64">
+        </div>
+        <input type="text" id="oficialInput" placeholder="Letras do Gabarito (Ex: ABCD...)" oninput="salvarTextoOficial()">
     </div>
 
     <div class="card">
-        <h3>Novo Aluno</h3>
-        <input type="text" id="nomeAluno" placeholder="Nome Completo">
-        <div class="upload-area" onpaste="colarImagem(event)">
-            <span>Clique aqui e Cole a Foto da Prova (Ctrl+V)</span>
-            <img id="preview" class="preview-img">
-            <input type="hidden" id="imgBase64">
+        <h3>2. Scanner do Aluno</h3>
+        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
+        <div class="upload-area" onpaste="colarImagem(event, 'previewAluno', 'imgAlunoBase64', false)">
+            <span>Clique aqui e <b>Cole a Foto da Prova do Aluno</b> (Ctrl+V)</span>
+            <img id="previewAluno" class="preview-img">
+            <input type="hidden" id="imgAlunoBase64">
         </div>
-        <input type="text" id="respostasAluno" placeholder="Cole as respostas do aluno aqui">
+        <input type="text" id="respostasAluno" placeholder="Respostas (Ex: 1A 2B ou ABCD...)">
         <button class="btn-principal" onclick="salvarAluno()">✅ CORRIGIR E SALVAR NO BANCO</button>
     </div>
 
     <div class="card">
-        <div class="abas-nav">
-            <div id="tab1" class="aba-link ativa" onclick="mudarAba(1)">Resultados Individuais</div>
-            <div id="tab2" class="aba-link" onclick="mudarAba(2)">Desempenho da Turma</div>
+        <div class="aba-nav">
+            <div id="abaT1" class="aba-item ativa" onclick="mudarAba(1)">Alunos</div>
+            <div id="abaT2" class="aba-item" onclick="mudarAba(2)">Desempenho da Turma</div>
         </div>
 
         <div id="contAba1">
-            <div id="listaAlunos">Carregando dados...</div>
+            <div id="listaAlunos">Sincronizando...</div>
         </div>
 
         <div id="contAba2" style="display:none;">
-            <h4>Habilidades com maior dificuldade (Erros):</h4>
-            <div id="analiseErros"></div>
+            <h4>Questões com maior índice de erro:</h4>
+            <div id="rankingErros"></div>
             <hr>
-            <h4>Média de Acertos da Turma:</h4>
-            <div class="barra-bg" style="height: 30px; margin: 10px 0;">
-                <div id="barraMediaGeral" style="background: #28a745; height: 100%; width: 0%; color: white; text-align: center; line-height: 30px; font-weight: bold;">0%</div>
-            </div>
+            <h4>Média de Acertos:</h4>
+            <div class="barra-bg" style="height:30px;"><div id="mediaTurma" style="background:#28a745; height:100%; color:white; text-align:center; line-height:30px; font-weight:bold;">0%</div></div>
         </div>
     </div>
 </div>
@@ -89,8 +93,6 @@
     const db = firebase.database();
 
     let turmaAtual = '8ano';
-    
-    // Função que garante que apenas letras A-E sejam processadas
     function limpar(txt) { return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : ""; }
 
     function mudarTurma(t) {
@@ -98,122 +100,106 @@
         document.getElementById('btn8').className = t === '8ano' ? 'btn-turma ativa' : 'btn-turma';
         document.getElementById('btn9').className = t === '9ano' ? 'btn-turma ativa' : 'btn-turma';
         document.getElementById('txtTurma').innerText = t === '8ano' ? '8º Ano' : '9º Ano';
-        carregarOficial();
-        escutarDados();
+        carregarDadosSincronizados();
     }
 
-    function carregarOficial() {
-        db.ref(`config/gabaritos/${turmaAtual}`).once('value', snap => {
-            document.getElementById('oficialInput').value = snap.val() || "";
-        });
-    }
-
-    function salvarOficial() {
-        const valor = document.getElementById('oficialInput').value;
-        db.ref(`config/gabaritos/${turmaAtual}`).set(valor);
-    }
-
-    function colarImagem(e) {
+    function colarImagem(e, imgId, hiddenId, isOficial) {
         const item = e.clipboardData.items[0];
         if (item && item.type.indexOf("image") !== -1) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                document.getElementById('preview').src = event.target.result;
-                document.getElementById('preview').style.display = "block";
-                document.getElementById('imgBase64').value = event.target.result;
+                const base64 = event.target.result;
+                document.getElementById(imgId).src = base64;
+                document.getElementById(imgId).style.display = "block";
+                document.getElementById(hiddenId).value = base64;
+                if(isOficial) db.ref(`sinc/${turmaAtual}/fotoOficial`).set(base64);
             };
             reader.readAsDataURL(item.getAsFile());
         }
     }
 
-    function salvarAluno() {
-        const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const resLimpa = limpar(document.getElementById('respostasAluno').value);
-        const foto = document.getElementById('imgBase64').value;
+    function salvarTextoOficial() {
+        const txt = document.getElementById('oficialInput').value;
+        db.ref(`sinc/${turmaAtual}/textoOficial`).set(txt);
+    }
 
-        if(!nome || !resLimpa) return alert("Nome e Respostas são obrigatórios!");
-
-        db.ref(`dados/${turmaAtual}/alunos`).push({
-            nome: nome,
-            respostas: resLimpa,
-            foto: foto,
-            data: new Date().toLocaleDateString()
-        }).then(() => {
-            document.getElementById('nomeAluno').value = "";
-            document.getElementById('respostasAluno').value = "";
-            document.getElementById('preview').style.display = "none";
-            document.getElementById('imgBase64').value = "";
+    function carregarDadosSincronizados() {
+        db.ref(`sinc/${turmaAtual}`).on('value', snap => {
+            const d = snap.val() || {};
+            document.getElementById('oficialInput').value = d.textoOficial || "";
+            if(d.fotoOficial) {
+                document.getElementById('previewOficial').src = d.fotoOficial;
+                document.getElementById('previewOficial').style.display = "block";
+            } else {
+                document.getElementById('previewOficial').style.display = "none";
+            }
+            escutarAlunos();
         });
     }
 
-    function escutarDados() {
-        const oficialRaw = document.getElementById('oficialInput').value;
-        const oficial = limpar(oficialRaw);
+    function salvarAluno() {
+        const nome = document.getElementById('nomeAluno').value.toUpperCase();
+        const res = limpar(document.getElementById('respostasAluno').value);
+        const foto = document.getElementById('imgAlunoBase64').value;
+        if(!nome || !res) return alert("Preencha o nome e as respostas!");
 
-        db.ref(`dados/${turmaAtual}/alunos`).on('value', snap => {
+        db.ref(`sinc/${turmaAtual}/alunos`).push({ nome, respostas: res, foto }).then(() => {
+            document.getElementById('nomeAluno').value = "";
+            document.getElementById('respostasAluno').value = "";
+            document.getElementById('previewAluno').style.display = "none";
+            document.getElementById('imgAlunoBase64').value = "";
+        });
+    }
+
+    function escutarAlunos() {
+        const oficial = limpar(document.getElementById('oficialInput').value);
+        db.ref(`sinc/${turmaAtual}/alunos`).on('value', snap => {
             const lista = document.getElementById('listaAlunos');
-            const analise = document.getElementById('analiseErros');
+            const ranking = document.getElementById('rankingErros');
             lista.innerHTML = "";
-            
-            let contagemErros = {};
-            let totalAcertos = 0;
-            let totalQuestoes = 0;
-            let totalAlunos = snap.numChildren();
+            let errosContagem = {}, acertosT = 0, questT = 0, totalAlunos = snap.numChildren();
 
             snap.forEach(child => {
-                const d = child.val();
-                const resA = limpar(d.respostas);
-                let acertos = 0;
-                let boxes = "";
+                const a = child.val();
+                const resA = limpar(a.respostas);
+                let acertosI = 0, boxes = "";
 
-                for(let i=0; i < oficial.length; i++) {
-                    const correto = (resA[i] === oficial[i] && oficial[i] !== undefined);
-                    if(correto) acertos++;
-                    else contagemErros[i+1] = (contagemErros[i+1] || 0) + 1;
-                    
-                    boxes += `<div class="questao-box ${correto ? 'acerto' : 'erro'}">${i+1}</div>`;
+                for(let i=0; i<oficial.length; i++) {
+                    const ok = (resA[i] === oficial[i] && oficial[i] !== undefined);
+                    if(ok) acertosI++; else errosContagem[i+1] = (errosContagem[i+1] || 0) + 1;
+                    boxes += `<div class="questao-box ${ok ? 'acerto' : 'erro'}">${i+1}</div>`;
                 }
-
-                totalAcertos += acertos;
-                totalQuestoes += oficial.length;
+                acertosT += acertosI; questT += oficial.length;
 
                 lista.innerHTML += `
-                    <div style="border-bottom: 1px solid #eee; padding: 15px 0;">
-                        <button style="float:right; width:auto; background:#ff4d4d; color:white; border:none; padding:5px; border-radius:4px;" onclick="db.ref('dados/${turmaAtual}/alunos/${child.key}').remove()">Excluir</button>
-                        <strong>${d.nome}</strong> - Nota: ${acertos}/${oficial.length}
+                    <div style="border-bottom:1px solid #eee; padding:10px 0;">
+                        <button style="float:right; background:red; color:white; border:none; padding:4px; border-radius:4px;" onclick="db.ref('sinc/${turmaAtual}/alunos/${child.key}').remove()">Excluir</button>
+                        <strong>${a.nome}</strong> - Nota: ${acertosI}/${oficial.length}
                         <div class="grade-questoes">${boxes}</div>
-                        ${d.foto ? `<details><summary style="font-size:12px; color:#007bff; cursor:pointer">Ver Foto da Prova</summary><img src="${d.foto}" style="width:100%; margin-top:10px;"></details>` : ''}
+                        ${a.foto ? `<details><summary style="color:#007bff; cursor:pointer; font-size:12px;">Ver Foto da Prova</summary><img src="${a.foto}" style="width:100%; margin-top:10px;"></details>` : ''}
                     </div>`;
             });
 
-            // Gerar Ranking de Dificuldades
             let rankHTML = "";
-            Object.keys(contagemErros).sort((a,b) => contagemErros[b] - contagemErros[a]).forEach(q => {
-                let p = (contagemErros[q] / totalAlunos) * 100;
-                rankHTML += `
-                    <div class="rank-item">
-                        <span style="width:80px">Questão ${q}</span>
-                        <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
-                        <span style="width:40px">${Math.round(p)}%</span>
-                    </div>`;
+            Object.keys(errosContagem).sort((a,b) => errosContagem[b] - errosContagem[a]).forEach(q => {
+                let p = (errosContagem[q]/totalAlunos)*100;
+                rankHTML += `<div class="rank-item"><span>Q${q}</span><div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div><span>${Math.round(p)}%</span></div>`;
             });
-            analise.innerHTML = rankHTML || "Nenhum erro registrado.";
-
-            const mediaFinal = totalQuestoes > 0 ? (totalAcertos/totalQuestoes)*100 : 0;
-            document.getElementById('barraMediaGeral').style.width = mediaFinal + "%";
-            document.getElementById('barraMediaGeral').innerText = Math.round(mediaFinal) + "%";
+            ranking.innerHTML = rankHTML || "Sem erros.";
+            const media = questT > 0 ? (acertosT/questT)*100 : 0;
+            document.getElementById('mediaTurma').style.width = media+"%";
+            document.getElementById('mediaTurma').innerText = Math.round(media)+"%";
         });
     }
 
     function mudarAba(n) {
         document.getElementById('contAba1').style.display = n === 1 ? 'block' : 'none';
         document.getElementById('contAba2').style.display = n === 2 ? 'block' : 'none';
-        document.getElementById('tab1').className = n === 1 ? 'aba-link ativa' : 'aba-link';
-        document.getElementById('tab2').className = n === 2 ? 'aba-link ativa' : 'aba-link';
+        document.getElementById('abaT1').className = n === 1 ? 'aba-item ativa' : 'aba-item';
+        document.getElementById('abaT2').className = n === 2 ? 'aba-item ativa' : 'aba-item';
     }
 
-    // Inicialização
-    window.onload = () => { carregarOficial(); escutarDados(); };
+    window.onload = carregarDadosSincronizados;
 </script>
 </body>
 </html>

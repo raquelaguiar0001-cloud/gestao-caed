@@ -11,75 +11,68 @@
         .container { width: 100%; max-width: 700px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         
-        /* Menu de Testes */
         .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .prova-bloco { border: 2px solid #333; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; }
+        .prova-bloco { border: 2px solid #333; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; background: white; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
 
         .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; }
         
-        /* Abas */
         .aba-container { display: flex; gap: 10px; margin-bottom: 10px; }
         .aba { flex: 1; padding: 12px; text-align: center; cursor: pointer; background: #ddd; border-radius: 8px; font-weight: bold; }
         .aba.ativa { background: #007bff; color: white; }
         
-        /* Correção Visual */
         .grade-questoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
         .questao-box { width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 5px; font-weight: bold; color: white !important; font-size: 12px; }
         .acerto { background-color: #28a745 !important; }
         .erro { background-color: #dc3545 !important; }
         
-        /* Análise de Dificuldade */
-        .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .barra-erro { height: 12px; background: #dc3545; border-radius: 6px; transition: 0.5s; }
+        .barra-erro-bg { background: #eee; height: 12px; border-radius: 6px; flex: 1; overflow: hidden; }
+        .barra-erro-fill { height: 100%; background: #dc3545; transition: 0.5s; }
+        .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; }
 
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
-        .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
+        .btn-acao { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .btn-excluir { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; float: right; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h3>Gabarito Oficial do Teste</h3>
+        <h3>1. Configurar Gabarito Oficial</h3>
         <div id="gridTestes" class="prova-grid"></div>
-        
-        <div class="upload-area" onpaste="colarImagem(event, 'previewOficial', 'imgOficial')">
-            <span>Cole aqui a foto do Gabarito Oficial (Ctrl+V)</span>
-            <img id="previewOficial" style="display:none; max-width: 100%; margin-top:10px;">
-            <input type="hidden" id="imgOficial">
-        </div>
-        <input type="text" id="gabaritoOficial" placeholder="Digite as letras (Ex: ABCD...)" oninput="salvarGabarito()">
+        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Ex: DBAD...)" oninput="salvarOficial()">
+        <p style="font-size: 11px; color: #666;">* O sistema filtrará apenas as letras automaticamente.</p>
     </div>
 
     <div class="card">
-        <strong>Entrada de Aluno</strong>
-        <input type="text" id="nomeAluno" placeholder="Nome Completo">
+        <h3>2. Corrigir Aluno</h3>
+        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
         <div class="upload-area" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
-            <span>Cole aqui a foto da prova do aluno (Ctrl+V)</span>
-            <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px;">
+            <span>Cole a FOTO DA PROVA aqui (Ctrl+V)</span>
+            <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px; border-radius: 5px;">
             <input type="hidden" id="imgAluno">
         </div>
         <input type="text" id="respostasAluno" placeholder="Respostas (Ex: 1A 2B ou ABCD...)">
-        <button class="btn-foto" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
+        <button class="btn-acao" onclick="processarSalvar()">✅ CORRIGIR E SALVAR</button>
     </div>
 
     <div class="aba-container">
-        <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Resultados Individuais</div>
-        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Análise da Turma</div>
+        <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Alunos</div>
+        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho da Turma</div>
     </div>
 
     <div id="contAba1" class="card">
-        <div id="listaAlunos">Carregando...</div>
+        <div id="listaAlunos">Sincronizando dados...</div>
     </div>
 
     <div id="contAba2" class="card" style="display:none;">
-        <h4>Questões com maior índice de ERRO (Dificuldades)</h4>
-        <div id="analiseDificuldade">Nenhum dado processado.</div>
+        <h4>Questões com Maiores Dificuldades</h4>
+        <div id="rankingDificuldade">Nenhum dado disponível.</div>
         <hr>
-        <h4>Média Geral da Turma</h4>
-        <div style="background: #eee; height: 30px; border-radius: 15px; overflow: hidden;">
-            <div id="barraMedia" style="background: #28a745; height: 100%; width: 0%; color: white; text-align: center; line-height: 30px; font-weight: bold;">0%</div>
+        <h4>Média Geral de Acertos</h4>
+        <div style="background: #eee; height: 30px; border-radius: 15px; overflow: hidden; margin-top: 10px;">
+            <div id="barraTurma" style="background: #28a745; height: 100%; width: 0%; color: white; text-align: center; line-height: 30px; font-weight: bold;">0%</div>
         </div>
     </div>
 </div>
@@ -89,15 +82,15 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function limpar(txt) { return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : ""; }
+    function filtrar(txt) { return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : ""; }
 
     window.onload = () => {
-        renderizarTestes();
+        renderizarGrid();
         selecionarTeste(localStorage.getItem('testeID') || "Teste 01 CAED");
         document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
     };
 
-    function renderizarTestes() {
+    function renderizarGrid() {
         const testes = ["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"];
         const grid = document.getElementById('gridTestes');
         grid.innerHTML = "";
@@ -107,20 +100,20 @@
         });
     }
 
-    function selecionarTeste(nome) {
-        localStorage.setItem('testeID', nome);
-        renderizarTestes();
-        atualizarEscuta();
+    function selecionarTeste(id) {
+        localStorage.setItem('testeID', id);
+        renderizarGrid();
+        atualizarRelatorios();
     }
 
-    function salvarGabarito() {
+    function salvarOficial() {
         localStorage.setItem('gabaritoOficial', document.getElementById('gabaritoOficial').value);
-        atualizarEscuta();
+        atualizarRelatorios();
     }
 
     function colarImagem(e, preview, hidden) {
         const item = e.clipboardData.items[0];
-        if (item.type.indexOf("image") !== -1) {
+        if (item && item.type.indexOf("image") !== -1) {
             const reader = new FileReader();
             reader.onload = (event) => {
                 document.getElementById(preview).src = event.target.result;
@@ -131,75 +124,78 @@
         }
     }
 
-    function salvarAluno() {
+    function processarSalvar() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const res = limpar(document.getElementById('respostasAluno').value);
+        const resRaw = document.getElementById('respostasAluno').value;
+        const resLimpa = filtrar(resRaw);
         const testeID = localStorage.getItem('testeID');
-        if(!nome || !res) return alert("Preencha o nome e as respostas!");
 
-        db.ref(`escola/turma/${testeID}`).push({ aluno: nome, respostas: res }).then(() => {
+        if(!nome || !resLimpa) return alert("Por favor, preencha o nome e as respostas.");
+
+        db.ref(`escola/v3/${testeID}`).push({ aluno: nome, respostas: resLimpa }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('respostasAluno').value = "";
             document.getElementById('previewAluno').style.display = "none";
         });
     }
 
-    function atualizarEscuta() {
+    function atualizarRelatorios() {
         const testeID = localStorage.getItem('testeID');
-        const oficial = limpar(document.getElementById('gabaritoOficial').value);
+        const oficial = filtrar(document.getElementById('gabaritoOficial').value);
         
-        db.ref(`escola/turma/${testeID}`).on('value', (snap) => {
+        db.ref(`escola/v3/${testeID}`).on('value', (snap) => {
             const lista = document.getElementById('listaAlunos');
-            const analiseDiv = document.getElementById('analiseDificuldade');
+            const rankingDiv = document.getElementById('rankingDificuldade');
             lista.innerHTML = "";
             
-            let totalAcertosTurma = 0;
-            let totalQuestoesTurma = 0;
-            let errosPorQuestao = {}; // Para o mapa de calor
+            let errosContagem = {};
+            let acertosTurma = 0;
+            let totalPossivelTurma = 0;
+            let qtdAlunos = snap.numChildren();
 
             snap.forEach(child => {
                 const d = child.val();
-                const resA = limpar(d.respostas);
-                let acertos = 0;
+                const resA = filtrar(d.respostas);
+                let acertosIndiv = 0;
                 let boxes = "";
 
                 for(let i=0; i < oficial.length; i++) {
-                    const correto = (resA[i] === oficial[i] && oficial[i] !== undefined);
-                    if(correto) acertos++;
+                    const isCorreto = (resA[i] === oficial[i] && oficial[i] !== undefined);
+                    if(isCorreto) acertosIndiv++;
                     else {
-                        errosPorQuestao[i+1] = (errosPorQuestao[i+1] || 0) + 1;
+                        errosContagem[i+1] = (errosContagem[i+1] || 0) + 1;
                     }
-                    boxes += `<div class="questao-box ${correto ? 'acerto' : 'erro'}">${i+1}</div>`;
+                    boxes += `<div class="questao-box ${isCorreto ? 'acerto' : 'erro'}">${i+1}</div>`;
                 }
 
-                totalAcertosTurma += acertos;
-                totalQuestoesTurma += oficial.length;
+                acertosTurma += acertosIndiv;
+                totalPossivelTurma += oficial.length;
 
                 lista.innerHTML += `
-                    <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-                        <strong>${d.aluno}</strong> - Nota: ${acertos}/${oficial.length}
+                    <div style="border-bottom: 1px solid #eee; padding: 15px 0;">
+                        <button class="btn-excluir" onclick="db.ref('escola/v3/${testeID}/${child.key}').remove()">Excluir</button>
+                        <strong>${d.aluno}</strong> - Nota: ${acertosIndiv}/${oficial.length}
                         <div class="grade-questoes">${boxes}</div>
                     </div>`;
             });
 
-            // Gerar Análise de Dificuldade (Quais questões erraram mais)
-            let analiseHTML = "";
-            const totalAlunos = snap.numChildren();
-            Object.keys(errosPorQuestao).forEach(q => {
-                let pErro = (errosPorQuestao[q] / totalAlunos) * 100;
-                analiseHTML += `
+            // Gerar Ranking de Dificuldades (Aba Desempenho)
+            let rankHTML = "";
+            Object.keys(errosContagem).sort((a,b) => errosContagem[b] - errosContagem[a]).forEach(q => {
+                let percErro = (errosContagem[q] / qtdAlunos) * 100;
+                rankHTML += `
                     <div class="rank-item">
-                        <span style="width:80px">Questão ${q}:</span>
-                        <div style="flex:1"><div class="barra-erro" style="width:${pErro}%"></div></div>
-                        <span style="font-size:11px">${Math.round(pErro)}% de erro</span>
+                        <span style="width:85px">Questão ${q}</span>
+                        <div class="barra-erro-bg"><div class="barra-erro-fill" style="width:${percErro}%"></div></div>
+                        <span style="width:40px; text-align:right">${Math.round(percErro)}%</span>
                     </div>`;
             });
-            analiseDiv.innerHTML = analiseHTML || "Nenhum erro registrado.";
+            rankingDiv.innerHTML = rankHTML || "Nenhum erro detectado ainda.";
 
-            // Média Geral
-            const media = totalQuestoesTurma > 0 ? (totalAcertosTurma/totalQuestoesTurma)*100 : 0;
-            document.getElementById('barraMedia').style.width = media + "%";
-            document.getElementById('barraMedia').innerText = Math.round(media) + "%";
+            // Média da Turma
+            const mediaFinal = totalPossivelTurma > 0 ? (acertosTurma/totalPossivelTurma)*100 : 0;
+            document.getElementById('barraTurma').style.width = mediaFinal + "%";
+            document.getElementById('barraTurma').innerText = Math.round(mediaFinal) + "%";
         });
     }
 

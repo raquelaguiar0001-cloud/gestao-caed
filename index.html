@@ -14,12 +14,13 @@
         .btn-t.ativa { background: #007bff; color: white; }
         
         /* Área de Colagem */
-        .upload-box { border: 2px dashed #007bff; padding: 20px; text-align: center; border-radius: 10px; background: #f8fbff; cursor: pointer; margin: 10px 0; color: #007bff; }
+        .upload-box { border: 2px dashed #007bff; padding: 20px; text-align: center; border-radius: 10px; background: #f8fbff; cursor: pointer; margin: 10px 0; color: #007bff; font-weight: bold; }
         #prevImg { max-width: 100%; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid #ccc; }
 
+        /* Gráfico Pedagógico */
         .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
         .tema-txt { font-size: 13px; color: #d9534f; font-weight: bold; width: 100%; margin-left: 90px; }
-        .barra-bg { background: #eee; height: 14px; flex: 1; border-radius: 7px; overflow: hidden; }
+        .barra-bg { background: #eee; height: 14px; flex: 1; border-radius: 7px; overflow: hidden; min-width: 150px; }
         .barra-fill { height: 100%; background: #dc3545; transition: 0.5s; }
         
         input, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 8px; box-sizing: border-box; }
@@ -40,29 +41,28 @@
     </div>
 
     <div class="card">
-        <h3>1. Gabarito e Matriz (<span id="nomeT">8º Ano</span>)</h3>
-        <input type="text" id="oficialInput" placeholder="Letras do Gabarito (Ex: DBADA...)" oninput="salvarConfig()">
-        <input type="text" id="temasInput" placeholder="Temas (Ex: Misturas, Células, Calor...)" oninput="salvarConfig()">
-        <p style="font-size: 11px; color: #777;">* Cole os temas que identifiquei na imagem anterior aqui.</p>
+        <h3>1. Gabarito e Matriz (Configuração Atual)</h3>
+        <input type="text" id="oficialInput" placeholder="Letras do Gabarito" oninput="salvarConfig()">
+        <input type="text" id="temasInput" placeholder="Temas das Questões" oninput="salvarConfig()">
     </div>
 
     <div class="card">
         <h3>2. Entrada do Aluno</h3>
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
+        <input type="text" id="nomeAluno" placeholder="Nome Completo do Aluno">
         
         <div class="upload-box" onpaste="colarFoto(event)">
-            Clique aqui e **Cole a Foto da Prova** (Ctrl+V)
+            Clique aqui e Cole a Foto da Prova (Ctrl+V)
             <img id="prevImg">
         </div>
 
-        <input type="text" id="resAluno" placeholder="Respostas (Ex: 1A 2B ou ABCD...)">
-        <button class="btn-save" onclick="salvarAluno()">✅ SALVAR E CORRIGIR</button>
+        <input type="text" id="resAluno" placeholder="Respostas (Ex: 1A 2B...)">
+        <button class="btn-save" onclick="salvarAluno()">✅ CORRIGIR E SALVAR NO BANCO</button>
     </div>
 
     <div class="card">
         <div class="aba-nav">
-            <div id="tab1" class="aba-item ativa" onclick="aba(1)">Resultados</div>
-            <div id="tab2" class="aba-item" onclick="aba(2)">Análise Pedagógica</div>
+            <div id="tab1" class="aba-item ativa" onclick="aba(1)">Resultados Individuais</div>
+            <div id="tab2" class="aba-item" onclick="aba(2)">Análise da Turma</div>
         </div>
         <div id="cont1"><div id="lista">Sincronizando...</div></div>
         <div id="cont2" style="display:none;"><div id="graficoTemas"></div></div>
@@ -77,11 +77,14 @@
     let turma = '8ano';
     let fotoBase64 = "";
 
+    // CONFIGURAÇÕES EXTRAÍDAS DAS SUAS IMAGENS
+    const gabaritoPadrao = "DBADABDDA DBA";
+    const temasPadrao = "Energia Elétrica, Transformação de Energia, Fecundação Interna, Fases da Lua, Eficiência Energética, Radiação Térmica, Energias Renováveis, Hidrelétrica, Energia Cinética, Energia Potencial, Geração de Energia, Variabilidade Genética";
+
     function mudarTurma(t) {
         turma = t;
         document.getElementById('bt8').className = t === '8ano' ? 'btn-t ativa' : 'btn-t';
         document.getElementById('bt9').className = t === '9ano' ? 'btn-t ativa' : 'btn-t';
-        document.getElementById('nomeT').innerText = t === '8ano' ? '8º Ano' : '9º Ano';
         carregarConfig();
     }
 
@@ -108,8 +111,9 @@
     function carregarConfig() {
         db.ref(`prof/v4/${turma}/config`).on('value', snap => {
             const d = snap.val() || {};
-            document.getElementById('oficialInput').value = d.gab || "";
-            document.getElementById('temasInput').value = d.temas || "";
+            // Se o banco estiver vazio, usa os dados das imagens que você mandou
+            document.getElementById('oficialInput').value = d.gab || gabaritoPadrao;
+            document.getElementById('temasInput').value = d.temas || temasPadrao;
             ouvirAlunos();
         });
     }
@@ -117,18 +121,19 @@
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
         const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-E]/g, '');
-        if(!nome || !res) return alert("Preencha nome e respostas!");
+        if(!nome || !res) return alert("Nome e respostas são obrigatórios!");
 
         db.ref(`prof/v4/${turma}/alunos`).push({ nome, res, foto: fotoBase64 }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
             document.getElementById('prevImg').style.display = "none";
             fotoBase64 = "";
+            alert("Salvo com sucesso!");
         });
     }
 
     function ouvirAlunos() {
-        const oficial = document.getElementById('oficialInput').value;
+        const oficial = document.getElementById('oficialInput').value.replace(/\s/g, '');
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
 
         db.ref(`prof/v4/${turma}/alunos`).on('value', snap => {
@@ -140,7 +145,7 @@
             snap.forEach(child => {
                 const a = child.val();
                 let acertos = 0, boxes = "";
-                const resA = a.res || "";
+                const resA = (a.res || "").replace(/\s/g, '');
 
                 for(let i=0; i<oficial.length; i++) {
                     const ok = (resA[i] === oficial[i] && oficial[i] !== undefined);
@@ -152,19 +157,19 @@
                     <button style="float:right;background:#ff4d4d;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;" onclick="db.ref('prof/v4/${turma}/alunos/${child.key}').remove()">Excluir</button>
                     <strong>${a.nome}</strong> - Nota: ${acertos}/${oficial.length}
                     <div style="display:flex;gap:4px;margin-top:8px;">${boxes}</div>
-                    ${a.foto ? `<details style="margin-top:8px;"><summary style="cursor:pointer; color:#007bff; font-size:12px;">Ver Foto da Prova</summary><img src="${a.foto}" style="width:100%; border-radius:8px;"></details>` : ''}
+                    ${a.foto ? `<details style="margin-top:8px;"><summary style="cursor:pointer; color:#007bff; font-size:12px;">Ver Foto Salva</summary><img src="${a.foto}" style="width:100%; border-radius:8px;"></details>` : ''}
                 </div>`;
             });
 
             for(let i=1; i<=oficial.length; i++) {
                 let p = totalAlunos > 0 ? Math.round(((errosCont[i] || 0)/totalAlunos)*100) : 0;
-                let tema = temasArr[i-1] || "Sem tema definido";
+                let tema = temasArr[i-1] || "Tema não definido";
                 grafico.innerHTML += `
                     <div class="rank-item">
                         <span style="width:85px; font-weight:bold;">Questão ${i}</span>
                         <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
                         <span style="width:40px; text-align:right;">${p}%</span>
-                        <div class="tema-txt">🎯 Tema: ${tema}</div>
+                        <div class="tema-txt">🎯 Conteúdo: ${tema}</div>
                     </div>`;
             }
         });

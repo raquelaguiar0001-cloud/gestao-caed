@@ -2,74 +2,83 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema Raquel Aguiar | Oficial</title>
+    <title>Scanner Pedagógico | Raquel Aguiar</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 800px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .turma-select { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-turma { flex: 1; padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: #e0e0e0; font-size: 16px; }
-        .btn-turma.ativa { background: #007bff; color: white; }
-        .upload-box { border: 2px dashed #007bff; border-radius: 10px; padding: 20px; text-align: center; color: #007bff; cursor: pointer; margin: 10px 0; background: #f0f7ff; }
-        .preview-img { max-width: 100%; max-height: 300px; margin-top: 10px; border-radius: 8px; display: none; }
-        .grade { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-        .box { width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 5px; color: white; font-weight: bold; font-size: 12px; }
-        .correto { background-color: #28a745; }
-        .errado { background-color: #dc3545; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-main { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .abas { display: flex; gap: 20px; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
-        .aba { padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
-        .aba.ativa { color: #007bff; border-bottom: 3px solid #007bff; }
-        .item-aluno { border-bottom: 1px solid #eee; padding: 15px 0; position: relative; }
-        .btn-del { position: absolute; right: 0; top: 15px; background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Seleção de Turma */
+        .turma-btn-group { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; }
+        .btn-t { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; background: #ddd; font-size: 16px; }
+        .btn-t.ativa { background: #007bff; color: white; }
+
+        /* Área de Colar Foto */
+        .drop-zone { border: 2px dashed #007bff; padding: 25px; text-align: center; border-radius: 12px; background: #f8fbff; cursor: pointer; margin-bottom: 10px; color: #007bff; font-weight: bold; }
+        .img-preview { max-width: 100%; max-height: 250px; margin-top: 15px; border-radius: 8px; display: none; border: 1px solid #ccc; }
+        
+        /* Gabarito e Notas */
+        .grid-res { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .q-box { width: 32px; height: 32px; line-height: 32px; text-align: center; border-radius: 6px; font-weight: bold; color: white; font-size: 13px; }
+        .certo { background: #28a745; }
+        .errado { background: #dc3545; }
+
+        input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-bottom: 15px; box-sizing: border-box; font-size: 16px; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 18px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
+        
+        .tab-nav { display: flex; gap: 20px; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab-item { padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
+        .tab-item.ativa { color: #007bff; border-bottom: 3px solid #007bff; }
+        
+        .aluno-row { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .btn-del { float: right; background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="turma-select">
-        <button id="b8" class="btn-turma ativa" onclick="mudarTurma('8ano')">8º ANO</button>
-        <button id="b9" class="btn-turma" onclick="mudarTurma('9ano')">9º ANO</button>
+    <div class="turma-btn-group">
+        <button id="bt8" class="btn-t ativa" onclick="setTurma('8ano')">8º ANO</button>
+        <button id="bt9" class="btn-t" onclick="setTurma('9ano')">9º ANO</button>
     </div>
 
     <div class="card">
-        <h3>1. Gabarito Oficial</h3>
-        <div class="upload-box" onpaste="colarFoto(event, 'pOficial', 'hOficial', true)">
-            Clique e Cole a Foto do Gabarito Oficial (Ctrl+V)
-            <img id="pOficial" class="preview-img">
-            <input type="hidden" id="hOficial">
+        <h3>1. Gabarito Oficial (<span id="turmaNome">8º Ano</span>)</h3>
+        <div class="drop-zone" id="dzOficial" onpaste="handlePaste(event, 'previewOficial', 'hiddenOficial', true)">
+            Clique aqui e Cole (Ctrl+V) a FOTO do Gabarito Oficial
+            <img id="previewOficial" class="img-preview">
+            <input type="hidden" id="hiddenOficial">
         </div>
-        <input type="text" id="inputOficial" placeholder="Digite as letras (Ex: ABCD...)" oninput="salvarOficial()">
+        <input type="text" id="inputOficial" placeholder="Digite ou Cole o Gabarito (Ex: ABCC...)" oninput="salvarOficial()">
     </div>
 
     <div class="card">
         <h3>2. Scanner do Aluno</h3>
-        <input type="text" id="nomeAluno" placeholder="Nome Completo">
-        <div class="upload-box" onpaste="colarFoto(event, 'pAluno', 'hAluno', false)">
-            Clique e Cole a Foto da Prova do Aluno (Ctrl+V)
-            <img id="pAluno" class="preview-img">
-            <input type="hidden" id="hAluno">
+        <input type="text" id="nomeAluno" placeholder="Nome Completo do Aluno">
+        <div class="drop-zone" id="dzAluno" onpaste="handlePaste(event, 'previewAluno', 'hiddenAluno', false)">
+            Clique aqui e Cole (Ctrl+V) a FOTO da Prova do Aluno
+            <img id="previewAluno" class="img-preview">
+            <input type="hidden" id="hiddenAluno">
         </div>
-        <input type="text" id="resAluno" placeholder="Respostas (Ex: 1A 2B...)">
-        <button class="btn-main" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
+        <input type="text" id="resAluno" placeholder="Respostas do Aluno (Ex: 1A 2B...)">
+        <button class="btn-save" onclick="salvarAluno()">✅ CORRIGIR E SALVAR AGORA</button>
     </div>
 
     <div class="card">
-        <div class="abas">
-            <div id="t1" class="aba ativa" onclick="aba(1)">Alunos</div>
-            <div id="t2" class="aba" onclick="aba(2)">Análise da Turma</div>
+        <div class="tab-nav">
+            <div id="tab1" class="tab-item ativa" onclick="toggleTab(1)">Resultados Individuais</div>
+            <div id="tab2" class="tab-item" onclick="toggleTab(2)">Desempenho da Turma</div>
         </div>
 
-        <div id="c1">
-            <div id="lista">Carregando...</div>
+        <div id="view1">
+            <div id="listaAlunos">Carregando dados...</div>
         </div>
 
-        <div id="c2" style="display:none;">
-            <h4>Desempenho por Questão (Erros)</h4>
-            <div id="stats"></div>
+        <div id="view2" style="display:none;">
+            <h4>Habilidades com maior dificuldade:</h4>
+            <div id="statsErros"></div>
         </div>
     </div>
 </div>
@@ -79,106 +88,126 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let turma = '8ano';
-    const limpar = (t) => t ? t.toUpperCase().replace(/[^A-E]/g, '') : "";
+    let turmaAtiva = '8ano';
+    const limparRes = (t) => t ? t.toUpperCase().replace(/[^A-E]/g, '') : "";
 
-    function mudarTurma(proxima) {
-        turma = proxima;
-        document.getElementById('b8').className = turma === '8ano' ? 'btn-turma ativa' : 'btn-turma';
-        document.getElementById('b9').className = turma === '9ano' ? 'btn-turma ativa' : 'btn-turma';
-        carregarConfig();
+    function setTurma(t) {
+        turmaAtiva = t;
+        document.getElementById('bt8').className = t === '8ano' ? 'btn-t ativa' : 'btn-t';
+        document.getElementById('bt9').className = t === '9ano' ? 'btn-t ativa' : 'btn-t';
+        document.getElementById('turmaNome').innerText = t === '8ano' ? '8º Ano' : '9º Ano';
+        initSync();
     }
 
-    function colarFoto(e, imgTag, inputTag, ehOficial) {
-        const item = e.clipboardData.items[0];
-        if (item && item.type.indexOf("image") !== -1) {
+    function handlePaste(e, imgId, hiddenId, ehOficial) {
+        const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
+        if (item) {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const b64 = event.target.result;
-                document.getElementById(imgTag).src = b64;
-                document.getElementById(imgTag).style.display = "block";
-                document.getElementById(inputTag).value = b64;
-                if(ehOficial) db.ref(`escola/${turma}/config/foto`).set(b64);
+                document.getElementById(imgId).src = b64;
+                document.getElementById(imgId).style.display = "block";
+                document.getElementById(hiddenId).value = b64;
+                if(ehOficial) db.ref(`prof/v4/${turmaAtiva}/config/fotoOficial`).set(b64);
             };
             reader.readAsDataURL(item.getAsFile());
         }
     }
 
     function salvarOficial() {
-        const txt = document.getElementById('inputOficial').value;
-        db.ref(`escola/${turma}/config/gabarito`).set(txt);
-    }
-
-    function carregarConfig() {
-        db.ref(`escola/${turma}/config`).on('value', snap => {
-            const d = snap.val() || {};
-            document.getElementById('inputOficial').value = d.gabarito || "";
-            if(d.foto) {
-                document.getElementById('pOficial').src = d.foto;
-                document.getElementById('pOficial').style.display = "block";
-            } else {
-                document.getElementById('pOficial').style.display = "none";
-            }
-            ouvirAlunos();
-        });
+        const val = document.getElementById('inputOficial').value;
+        db.ref(`prof/v4/${turmaAtiva}/config/gabaritoTxt`).set(val);
     }
 
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const res = limpar(document.getElementById('resAluno').value);
-        const foto = document.getElementById('hAluno').value;
-        if(!nome || !res) return alert("Nome e respostas são obrigatórios!");
+        const res = limparRes(document.getElementById('resAluno').value);
+        const foto = document.getElementById('hiddenAluno').value;
+        
+        if(!nome || !res) return alert("Nome e Respostas são obrigatórios!");
 
-        db.ref(`escola/${turma}/alunos`).push({ nome, res, foto }).then(() => {
+        db.ref(`prof/v4/${turmaAtiva}/alunos`).push({ nome, res, foto }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
-            document.getElementById('pAluno').style.display = "none";
-            document.getElementById('hAluno').value = "";
+            document.getElementById('previewAluno').style.display = "none";
+            document.getElementById('hiddenAluno').value = "";
         });
     }
 
-    function ouvirAlunos() {
-        const oficial = limpar(document.getElementById('inputOficial').value);
-        db.ref(`escola/${turma}/alunos`).on('value', snap => {
-            const list = document.getElementById('lista');
-            const stats = document.getElementById('stats');
-            list.innerHTML = ""; stats.innerHTML = "";
-            let erros = {}, totalA = snap.numChildren();
+    function initSync() {
+        // Escuta gabarito oficial e alunos em conjunto
+        db.ref(`prof/v4/${turmaAtiva}`).on('value', snap => {
+            const dados = snap.val() || {};
+            const config = dados.config || {};
+            const alunos = dados.alunos || {};
+            
+            const oficial = limparRes(config.gabaritoTxt);
+            document.getElementById('inputOficial').value = config.gabaritoTxt || "";
+            
+            if(config.fotoOficial) {
+                document.getElementById('previewOficial').src = config.fotoOficial;
+                document.getElementById('previewOficial').style.display = "block";
+            }
 
-            snap.forEach(child => {
-                const a = child.val();
-                const resA = limpar(a.res);
-                let nota = 0, boxes = "";
+            renderizar(alunos, oficial);
+        });
+    }
 
-                for(let i=0; i<oficial.length; i++) {
-                    const ok = (resA[i] === oficial[i] && oficial[i] !== undefined);
-                    if(ok) nota++; else erros[i+1] = (erros[i+1] || 0) + 1;
-                    boxes += `<div class="box ${ok ? 'correto' : 'errado'}">${i+1}</div>`;
-                }
+    function renderizar(alunosObj, oficial) {
+        const lista = document.getElementById('listaAlunos');
+        const stats = document.getElementById('statsErros');
+        lista.innerHTML = ""; stats.innerHTML = "";
+        
+        if (!oficial) {
+            lista.innerHTML = "<p style='color:red'>⚠️ Por favor, digite o gabarito oficial acima para corrigir.</p>";
+            return;
+        }
 
-                list.innerHTML += `<div class="item-aluno">
-                    <button class="btn-del" onclick="db.ref('escola/${turma}/alunos/${child.key}').remove()">Excluir</button>
-                    <strong>${a.nome}</strong> - Nota: ${nota}/${oficial.length}
-                    <div class="grade">${boxes}</div>
-                    ${a.foto ? `<details><summary style="cursor:pointer; color:#007bff; font-size:12px">Ver Prova</summary><img src="${a.foto}" style="width:100%"></details>` : ''}
+        let contagemErros = {};
+        let totalAlunos = 0;
+
+        Object.keys(alunosObj).forEach(key => {
+            totalAlunos++;
+            const a = alunosObj[key];
+            const resA = limparRes(a.res);
+            let acertos = 0;
+            let boxes = "";
+
+            for(let i=0; i < oficial.length; i++) {
+                const isOk = (resA[i] === oficial[i] && oficial[i] !== undefined);
+                if(isOk) acertos++;
+                else contagemErros[i+1] = (contagemErros[i+1] || 0) + 1;
+                boxes += `<div class="q-box ${isOk ? 'certo' : 'errado'}">${i+1}</div>`;
+            }
+
+            lista.innerHTML += `
+                <div class="aluno-row">
+                    <button class="btn-del" onclick="db.ref('prof/v4/${turmaAtiva}/alunos/${key}').remove()">Excluir</button>
+                    <strong>${a.nome}</strong> - Pontuação: ${acertos}/${oficial.length}
+                    <div class="grid-res">${boxes}</div>
+                    ${a.foto ? `<details style="margin-top:10px"><summary style="cursor:pointer; color:#007bff">Ver Foto da Prova</summary><img src="${a.foto}" style="width:100%"></details>` : ''}
                 </div>`;
-            });
+        });
 
-            Object.keys(erros).forEach(q => {
-                let p = Math.round((erros[q]/totalA)*100);
-                stats.innerHTML += `<div style="margin:5px 0">Q${q}: ${p}% de erros <div style="background:#eee; height:10px; border-radius:5px"><div style="background:red; width:${p}%; height:100%; border-radius:5px"></div></div></div>`;
-            });
+        // Gráfico de dificuldades
+        Object.keys(contagemErros).forEach(q => {
+            let p = Math.round((contagemErros[q]/totalAlunos)*100);
+            stats.innerHTML += `<div style="margin-bottom:10px">Questão ${q}: ${p}% de erros
+                <div style="background:#eee; height:12px; border-radius:6px; overflow:hidden">
+                    <div style="background:red; width:${p}%; height:100%"></div>
+                </div>
+            </div>`;
         });
     }
 
-    function aba(n) {
-        document.getElementById('c1').style.display = n===1 ? 'block' : 'none';
-        document.getElementById('c2').style.display = n===2 ? 'block' : 'none';
-        document.getElementById('t1').className = n===1 ? 'aba ativa' : 'aba';
-        document.getElementById('t2').className = n===2 ? 'aba ativa' : 'aba';
+    function toggleTab(n) {
+        document.getElementById('view1').style.display = n === 1 ? 'block' : 'none';
+        document.getElementById('view2').style.display = n === 2 ? 'block' : 'none';
+        document.getElementById('tab1').className = n === 1 ? 'tab-item ativa' : 'tab-item';
+        document.getElementById('tab2').className = n === 2 ? 'tab-item ativa' : 'tab-item';
     }
 
-    window.onload = carregarConfig;
+    window.onload = initSync;
 </script>
 </body>
 </html>

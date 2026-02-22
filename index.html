@@ -9,25 +9,20 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 850px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        
-        /* Turmas */
         .turma-btns { display: flex; gap: 10px; margin-bottom: 15px; }
         .btn-t { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; }
         .btn-t.ativa { background: #007bff; color: white; }
-
-        /* Gráfico de Erros Melhorado */
-        .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-        .tema-txt { font-size: 13px; color: #555; font-style: italic; width: 100%; margin-top: -5px; margin-left: 85px; }
-        .barra-bg { background: #eee; height: 14px; flex: 1; border-radius: 7px; overflow: hidden; min-width: 150px; }
+        .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        .tema-txt { font-size: 13px; color: #d9534f; font-weight: bold; width: 100%; margin-left: 90px; }
+        .barra-bg { background: #eee; height: 14px; flex: 1; border-radius: 7px; overflow: hidden; }
         .barra-fill { height: 100%; background: #dc3545; transition: 0.5s; }
-        
         .upload-area { border: 2px dashed #007bff; padding: 15px; text-align: center; border-radius: 10px; background: #f8fbff; cursor: pointer; margin: 10px 0; }
         input, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 8px; box-sizing: border-box; }
         .btn-principal { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
-        
         .aba-nav { display: flex; gap: 15px; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
         .aba-item { padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
         .aba-item.ativa { color: #007bff; border-bottom: 3px solid #007bff; }
+        .q-mini { width:25px; height:25px; color:white; text-align:center; line-height:25px; border-radius:4px; font-size:10px; font-weight:bold; }
     </style>
 </head>
 <body>
@@ -39,17 +34,17 @@
     </div>
 
     <div class="card">
-        <h3>1. Configurar Gabarito e Temáticas (<span id="nomeT">8º Ano</span>)</h3>
-        <input type="text" id="oficialInput" placeholder="Letras do Gabarito (Ex: ABCDA...)" oninput="salvarConfig()">
-        <input type="text" id="temasInput" placeholder="Temas das questões separados por vírgula (Ex: Adição, Subtração, Fração...)" oninput="salvarConfig()">
-        <p style="font-size: 11px; color: #777;">* Cole os temas na mesma ordem das questões.</p>
+        <h3>1. Configuração do Gabarito (<span id="nomeT">8º Ano</span>)</h3>
+        <input type="text" id="oficialInput" placeholder="Gabarito (Ex: ABCDA...)" oninput="salvarConfig()">
+        <input type="text" id="temasInput" placeholder="Temas (Ex: Fração, Álgebra, Geometria...)" oninput="salvarConfig()">
+        <p style="font-size: 11px; color: #777;">* Separe os temas por vírgula na ordem das questões.</p>
     </div>
 
     <div class="card">
         <h3>2. Scanner do Aluno</h3>
         <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
         <div class="upload-area" onpaste="colarFoto(event)">
-            <span>Clique e Cole a Foto da Prova (Ctrl+V)</span>
+            <span>Clique e Cole a Foto (Ctrl+V)</span>
             <img id="prev" style="max-width:100%; display:none; margin-top:10px; border-radius:5px;">
         </div>
         <input type="text" id="resAluno" placeholder="Respostas (Ex: 1A 2B...)">
@@ -58,14 +53,12 @@
 
     <div class="card">
         <div class="aba-nav">
-            <div id="tab1" class="aba-item ativa" onclick="aba(1)">Resultados</div>
-            <div id="tab2" class="aba-item" onclick="aba(2)">Análise por Temática</div>
+            <div id="tab1" class="aba-item ativa" onclick="aba(1)">Resultados Individuais</div>
+            <div id="tab2" class="aba-item" onclick="aba(2)">Análise Pedagógica</div>
         </div>
-
-        <div id="cont1"><div id="lista">Carregando...</div></div>
-
+        <div id="cont1"><div id="lista">Sincronizando dados antigos...</div></div>
         <div id="cont2" style="display:none;">
-            <h4>Desempenho da Turma por Habilidade:</h4>
+            <h4>Desempenho por Temática:</h4>
             <div id="graficoTemas"></div>
         </div>
     </div>
@@ -79,6 +72,7 @@
     let turma = '8ano';
     let fotoBase64 = "";
 
+    // VOLTANDO PARA O CAMINHO ORIGINAL ONDE ESTÃO SEUS DADOS
     function mudarTurma(t) {
         turma = t;
         document.getElementById('bt8').className = t === '8ano' ? 'btn-t ativa' : 'btn-t';
@@ -103,11 +97,11 @@
     function salvarConfig() {
         const gab = document.getElementById('oficialInput').value.toUpperCase().replace(/[^A-E]/g, '');
         const temas = document.getElementById('temasInput').value;
-        db.ref(`v5/${turma}/config`).set({ gab, temas });
+        db.ref(`prof/v4/${turma}/config`).set({ gab, temas }); // Caminho v4 restaurado
     }
 
     function carregarConfig() {
-        db.ref(`v5/${turma}/config`).on('value', snap => {
+        db.ref(`prof/v4/${turma}/config`).on('value', snap => {
             const d = snap.val() || {};
             document.getElementById('oficialInput').value = d.gab || "";
             document.getElementById('temasInput').value = d.temas || "";
@@ -120,7 +114,7 @@
         const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-E]/g, '');
         if(!nome || !res) return alert("Preencha nome e respostas!");
 
-        db.ref(`v5/${turma}/alunos`).push({ nome, res, foto: fotoBase64 }).then(() => {
+        db.ref(`prof/v4/${turma}/alunos`).push({ nome, res, foto: fotoBase64 }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
             document.getElementById('prev').style.display = "none";
@@ -132,7 +126,7 @@
         const oficial = document.getElementById('oficialInput').value;
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
 
-        db.ref(`v5/${turma}/alunos`).on('value', snap => {
+        db.ref(`prof/v4/${turma}/alunos`).on('value', snap => {
             const lista = document.getElementById('lista');
             const grafico = document.getElementById('graficoTemas');
             lista.innerHTML = ""; grafico.innerHTML = "";
@@ -141,21 +135,22 @@
             snap.forEach(child => {
                 const a = child.val();
                 let acertos = 0, boxes = "";
+                const resLimpa = a.res || "";
 
                 for(let i=0; i<oficial.length; i++) {
-                    const ok = (a.res[i] === oficial[i]);
+                    const ok = (resLimpa[i] === oficial[i] && oficial[i] !== undefined);
                     if(ok) acertos++; else errosCont[i+1] = (errosCont[i+1] || 0) + 1;
-                    boxes += `<div style="width:25px;height:25px;background:${ok?'#28a745':'#dc3545'};color:white;text-align:center;line-height:25px;border-radius:4px;font-size:10px;">${i+1}</div>`;
+                    boxes += `<div class="q-mini" style="background:${ok?'#28a745':'#dc3545'};">${i+1}</div>`;
                 }
 
-                lista.innerHTML += `<div style="border-bottom:1px solid #eee; padding:10px 0;">
-                    <button style="float:right;background:red;color:white;border:none;padding:5px;border-radius:4px;cursor:pointer;" onclick="db.ref('v5/${turma}/alunos/${child.key}').remove()">Excluir</button>
-                    <strong>${a.nome}</strong> - Nota: ${acertos}/${oficial.length}
-                    <div style="display:flex;gap:4px;margin-top:5px;">${boxes}</div>
+                lista.innerHTML += `<div style="border-bottom:1px solid #eee; padding:12px 0;">
+                    <button style="float:right;background:#ff4d4d;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;" onclick="db.ref('prof/v4/${turma}/alunos/${child.key}').remove()">Excluir</button>
+                    <strong>${a.nome}</strong> - Acertos: ${acertos}/${oficial.length}
+                    <div style="display:flex;gap:4px;margin-top:8px;">${boxes}</div>
                 </div>`;
             });
 
-            // Gerar Ranking com Temas
+            // Ranking com Temáticas
             for(let i=1; i<=oficial.length; i++) {
                 let qtdErro = errosCont[i] || 0;
                 let p = totalAlunos > 0 ? Math.round((qtdErro/totalAlunos)*100) : 0;
@@ -163,10 +158,10 @@
                 
                 grafico.innerHTML += `
                     <div class="rank-item">
-                        <span style="width:80px; font-weight:bold;">Questão ${i}</span>
+                        <span style="width:85px; font-weight:bold;">Questão ${i}</span>
                         <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
-                        <span style="width:40px; text-align:right;">${p}%</span>
-                        <div class="tema-txt">📌 Tema: ${tema}</div>
+                        <span style="width:40px; text-align:right; font-weight:bold;">${p}%</span>
+                        <div class="tema-txt">🎯 Conteúdo: ${tema}</div>
                     </div>`;
             }
         });

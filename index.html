@@ -2,66 +2,86 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Scanner Precisão 100% | Raquel Aguiar</title>
+    <title>Scanner Pedagógico | Raquel Aguiar</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 600px; }
+        .container { width: 100%; max-width: 700px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
-        .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
-        .prova-bloco { border: 2px solid #333; border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; min-height: 50px; display: flex; align-items: center; justify-content: center; }
+        
+        /* Menu de Testes */
+        .prova-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .prova-bloco { border: 2px solid #333; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; background: white; font-size: 12px; }
         .prova-bloco.selecionado { background: #007bff; color: white; border-color: #0056b3; }
-        .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; font-size: 13px; }
-        .aba-container { display: flex; gap: 10px; margin-bottom: 10px; width: 100%; }
+
+        .upload-area { border: 2px dashed #ccc; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer; background: #fafafa; border-radius: 8px; color: #666; }
+        
+        /* Abas */
+        .aba-container { display: flex; gap: 10px; margin-bottom: 10px; }
         .aba { flex: 1; padding: 12px; text-align: center; cursor: pointer; background: #ddd; border-radius: 8px; font-weight: bold; }
         .aba.ativa { background: #007bff; color: white; }
-        .grade-questoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-        .questao-box { width: 35px; height: 35px; line-height: 35px; text-align: center; border-radius: 6px; font-weight: bold; color: white !important; font-size: 14px; }
-        .acerto { background-color: #28a745 !important; border: 1px solid #1e7e34 !important; }
-        .erro { background-color: #dc3545 !important; border: 1px solid #bd2130 !important; }
+        
+        /* Correção Visual */
+        .grade-questoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .questao-box { width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 5px; font-weight: bold; color: white !important; font-size: 12px; }
+        .acerto { background-color: #28a745 !important; }
+        .erro { background-color: #dc3545 !important; }
+        
+        /* Análise de Dificuldade */
+        .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .barra-erro { height: 12px; background: #dc3545; border-radius: 6px; transition: 0.5s; }
+
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 5px; box-sizing: border-box; }
         .btn-foto { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
-        .btn-excluir { background: #ff4d4d; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; float: right; font-weight: bold; }
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="card">
-        <h3>📂 Configuração do Teste</h3>
-        <select id="turma" onchange="atualizarEscuta()">
-            <option value="8ano">8º Ano</option>
-            <option value="9ano">9º Ano</option>
-        </select>
+        <h3>Gabarito Oficial do Teste</h3>
         <div id="gridTestes" class="prova-grid"></div>
-        <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewOficial', 'imgOficial')">
-            <span>Clique aqui e Cole (Ctrl+V) a FOTO DO GABARITO OFICIAL</span>
-            <img id="previewOficial" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
+        
+        <div class="upload-area" onpaste="colarImagem(event, 'previewOficial', 'imgOficial')">
+            <span>Cole aqui a foto do Gabarito Oficial (Ctrl+V)</span>
+            <img id="previewOficial" style="display:none; max-width: 100%; margin-top:10px;">
             <input type="hidden" id="imgOficial">
         </div>
-        <input type="text" id="gabaritoOficial" placeholder="Gabarito Oficial (Ex: ABCDE...)" oninput="salvarGabarito()" style="margin-top: 15px; border: 2px solid #007bff;">
+        <input type="text" id="gabaritoOficial" placeholder="Digite as letras (Ex: ABCD...)" oninput="salvarGabarito()">
     </div>
 
     <div class="card">
-        <strong>📸 Scanner e Entrada do Aluno</strong>
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        <div class="upload-area" tabindex="0" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
-            <span>Clique aqui e Cole (Ctrl+V) a FOTO DO ALUNO</span>
-            <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px; border-radius: 8px;">
+        <strong>Entrada de Aluno</strong>
+        <input type="text" id="nomeAluno" placeholder="Nome Completo">
+        <div class="upload-area" onpaste="colarImagem(event, 'previewAluno', 'imgAluno')">
+            <span>Cole aqui a foto da prova do aluno (Ctrl+V)</span>
+            <img id="previewAluno" style="display:none; max-width: 100%; margin-top:10px;">
             <input type="hidden" id="imgAluno">
         </div>
-        <input type="text" id="gabaritoDigitadoAluno" placeholder="Respostas (Ex: 1A 2B ou ABCD)">
-        <button class="btn-foto" onclick="processarCorrecao()">✅ SALVAR E CORRIGIR AGORA</button>
+        <input type="text" id="respostasAluno" placeholder="Respostas (Ex: 1A 2B ou ABCD...)">
+        <button class="btn-foto" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
     </div>
 
     <div class="aba-container">
-        <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Alunos</div>
-        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Desempenho</div>
+        <div id="aba1" class="aba ativa" onclick="mudarAba(1)">👥 Resultados Individuais</div>
+        <div id="aba2" class="aba" onclick="mudarAba(2)">📊 Análise da Turma</div>
     </div>
 
-    <div id="contAba1" class="card"><div id="listaAlunos">Sincronizando...</div></div>
-    <div id="contAba2" class="card" style="display:none;"><div id="barraProgresso" style="background: #28a745; height: 30px; width: 0%; color: white; text-align: center; border-radius: 5px;">0%</div><p id="statsGeral" style="text-align: center; margin-top:10px;"></p></div>
+    <div id="contAba1" class="card">
+        <div id="listaAlunos">Carregando...</div>
+    </div>
+
+    <div id="contAba2" class="card" style="display:none;">
+        <h4>Questões com maior índice de ERRO (Dificuldades)</h4>
+        <div id="analiseDificuldade">Nenhum dado processado.</div>
+        <hr>
+        <h4>Média Geral da Turma</h4>
+        <div style="background: #eee; height: 30px; border-radius: 15px; overflow: hidden;">
+            <div id="barraMedia" style="background: #28a745; height: 100%; width: 0%; color: white; text-align: center; line-height: 30px; font-weight: bold;">0%</div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -69,111 +89,117 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Função que garante que só sobram as letras A, B, C, D ou E
-    function limparDados(txt) { 
-        return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : ""; 
-    }
+    function limpar(txt) { return txt ? txt.toUpperCase().replace(/[^A-E]/g, '') : ""; }
 
     window.onload = () => {
-        renderizarBlocos();
+        renderizarTestes();
         selecionarTeste(localStorage.getItem('testeID') || "Teste 01 CAED");
         document.getElementById('gabaritoOficial').value = localStorage.getItem('gabaritoOficial') || "";
     };
+
+    function renderizarTestes() {
+        const testes = ["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"];
+        const grid = document.getElementById('gridTestes');
+        grid.innerHTML = "";
+        testes.forEach(t => {
+            const sel = localStorage.getItem('testeID') === t ? 'selecionado' : '';
+            grid.innerHTML += `<div class="prova-bloco ${sel}" onclick="selecionarTeste('${t}')">${t}</div>`;
+        });
+    }
+
+    function selecionarTeste(nome) {
+        localStorage.setItem('testeID', nome);
+        renderizarTestes();
+        atualizarEscuta();
+    }
 
     function salvarGabarito() {
         localStorage.setItem('gabaritoOficial', document.getElementById('gabaritoOficial').value);
         atualizarEscuta();
     }
 
-    function renderizarBlocos() {
-        const grid = document.getElementById('gridTestes');
-        const provas = ["Teste 01 CAED", "Teste 02 CAED", "Teste 01 AVA 1 BIM"];
-        grid.innerHTML = "";
-        provas.forEach(p => {
-            const sel = localStorage.getItem('testeID') === p ? 'selecionado' : '';
-            grid.innerHTML += `<div class="prova-bloco ${sel}" onclick="selecionarTeste('${p}')">${p}</div>`;
-        });
-    }
-
-    function selecionarTeste(nome) {
-        localStorage.setItem('testeID', nome);
-        renderizarBlocos();
-        atualizarEscuta();
-    }
-
-    function colarImagem(event, previewId, hiddenId) {
-        const item = (event.clipboardData || event.originalEvent.clipboardData).items[0];
-        if (item && item.type.indexOf("image") !== -1) {
+    function colarImagem(e, preview, hidden) {
+        const item = e.clipboardData.items[0];
+        if (item.type.indexOf("image") !== -1) {
             const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById(previewId).src = e.target.result;
-                document.getElementById(previewId).style.display = "block";
-                document.getElementById(hiddenId).value = e.target.result;
+            reader.onload = (event) => {
+                document.getElementById(preview).src = event.target.result;
+                document.getElementById(preview).style.display = "block";
+                document.getElementById(hidden).value = event.target.result;
             };
             reader.readAsDataURL(item.getAsFile());
         }
     }
 
-    function processarCorrecao() {
+    function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const oficial = limparDados(document.getElementById('gabaritoOficial').value);
-        const alunoRes = limparDados(document.getElementById('gabaritoDigitadoAluno').value);
+        const res = limpar(document.getElementById('respostasAluno').value);
         const testeID = localStorage.getItem('testeID');
-        const turma = document.getElementById('turma').value;
+        if(!nome || !res) return alert("Preencha o nome e as respostas!");
 
-        if(!nome || oficial.length === 0) return alert("Preencha Nome e Gabarito Oficial!");
-
-        // Salvando já limpo para não ter erro de comparação depois
-        db.ref(`escola/${turma}/${testeID}`).push({
-            aluno: nome,
-            respostas: alunoRes 
-        }).then(() => {
+        db.ref(`escola/turma/${testeID}`).push({ aluno: nome, respostas: res }).then(() => {
             document.getElementById('nomeAluno').value = "";
-            document.getElementById('gabaritoDigitadoAluno').value = "";
+            document.getElementById('respostasAluno').value = "";
             document.getElementById('previewAluno').style.display = "none";
         });
     }
 
     function atualizarEscuta() {
-        const turma = document.getElementById('turma').value;
         const testeID = localStorage.getItem('testeID');
-        const oficial = limparDados(document.getElementById('gabaritoOficial').value);
+        const oficial = limpar(document.getElementById('gabaritoOficial').value);
         
-        db.ref(`escola/${turma}/${testeID}`).on('value', (snap) => {
+        db.ref(`escola/turma/${testeID}`).on('value', (snap) => {
             const lista = document.getElementById('listaAlunos');
+            const analiseDiv = document.getElementById('analiseDificuldade');
             lista.innerHTML = "";
-            let somaAcertos = 0; let somaTotal = 0;
+            
+            let totalAcertosTurma = 0;
+            let totalQuestoesTurma = 0;
+            let errosPorQuestao = {}; // Para o mapa de calor
 
-            snap.forEach((child) => {
+            snap.forEach(child => {
                 const d = child.val();
-                const resA = limparDados(d.respostas);
-                let acertosCalc = 0;
+                const resA = limpar(d.respostas);
+                let acertos = 0;
                 let boxes = "";
-                
-                // Compara letra por letra baseado no tamanho do oficial
+
                 for(let i=0; i < oficial.length; i++) {
-                    const letraAluno = resA[i] || "";
-                    const letraOficial = oficial[i];
-                    const correta = (letraAluno === letraOficial && letraAluno !== "");
-                    
-                    if(correta) acertosCalc++;
-                    boxes += `<div class="questao-box ${correta ? 'acerto' : 'erro'}">${i+1}</div>`;
+                    const correto = (resA[i] === oficial[i] && oficial[i] !== undefined);
+                    if(correto) acertos++;
+                    else {
+                        errosPorQuestao[i+1] = (errosPorQuestao[i+1] || 0) + 1;
+                    }
+                    boxes += `<div class="questao-box ${correto ? 'acerto' : 'erro'}">${i+1}</div>`;
                 }
 
-                somaAcertos += acertosCalc;
-                somaTotal += oficial.length;
+                totalAcertosTurma += acertos;
+                totalQuestoesTurma += oficial.length;
 
                 lista.innerHTML += `
-                    <div style="border-bottom: 2px solid #eee; padding: 15px 0;">
-                        <button class="btn-excluir" onclick="db.ref('escola/${turma}/${testeID}/${child.key}').remove()">Excluir</button>
-                        <strong>${d.aluno}</strong> - Resultado: ${acertosCalc}/${oficial.length}
+                    <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                        <strong>${d.aluno}</strong> - Nota: ${acertos}/${oficial.length}
                         <div class="grade-questoes">${boxes}</div>
                     </div>`;
             });
-            const p = somaTotal > 0 ? (somaAcertos/somaTotal)*100 : 0;
-            document.getElementById('barraProgresso').style.width = p+"%";
-            document.getElementById('barraProgresso').innerText = Math.round(p)+"%";
-            document.getElementById('statsGeral').innerText = `Média da Turma: ${Math.round(p)}% (${snap.numChildren()} alunos)`;
+
+            // Gerar Análise de Dificuldade (Quais questões erraram mais)
+            let analiseHTML = "";
+            const totalAlunos = snap.numChildren();
+            Object.keys(errosPorQuestao).forEach(q => {
+                let pErro = (errosPorQuestao[q] / totalAlunos) * 100;
+                analiseHTML += `
+                    <div class="rank-item">
+                        <span style="width:80px">Questão ${q}:</span>
+                        <div style="flex:1"><div class="barra-erro" style="width:${pErro}%"></div></div>
+                        <span style="font-size:11px">${Math.round(pErro)}% de erro</span>
+                    </div>`;
+            });
+            analiseDiv.innerHTML = analiseHTML || "Nenhum erro registrado.";
+
+            // Média Geral
+            const media = totalQuestoesTurma > 0 ? (totalAcertosTurma/totalQuestoesTurma)*100 : 0;
+            document.getElementById('barraMedia').style.width = media + "%";
+            document.getElementById('barraMedia').innerText = Math.round(media) + "%";
         });
     }
 

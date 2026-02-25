@@ -9,30 +9,30 @@
     
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto 20px; }
-        .turma-selector { display: flex; gap: 10px; }
-        .btn-turma { padding: 10px 20px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto 15px; }
+        .turma-selector { display: flex; gap: 8px; }
+        .btn-turma { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 4px; }
         .btn-turma.ativa { background: #333; color: white; }
         
-        .habilidades-panel { background: white; border: 1px solid #333; padding: 15px; margin: 0 auto 20px; max-width: 1068px; display: none; }
-        .btn-hab-toggle { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        /* Barra de Testes Dinâmica */
+        .testes-nav { display: flex; gap: 10px; max-width: 1100px; margin: 0 auto 15px; overflow-x: auto; padding-bottom: 5px; align-items: center; }
+        .btn-teste { border: 1px solid #333; padding: 10px 15px; background: white; cursor: pointer; font-weight: bold; white-space: nowrap; position: relative; }
+        .btn-teste.ativa { background: #eee; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); border-bottom: 3px solid #333; }
+        .btn-add-teste { background: #007bff; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .btn-del-teste { font-size: 10px; color: red; margin-left: 8px; border: none; background: none; cursor: pointer; }
 
         .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 0; max-width: 1100px; margin: 0 auto; border: 1px solid #333; background: white; min-height: 500px; }
         .col { border-right: 1px solid #333; padding: 15px; }
-        .col:last-child { border-right: none; }
         .col-title { font-weight: bold; border-bottom: 1px solid #333; margin: -15px -15px 15px -15px; padding: 10px; text-align: center; background: #f9f9f9; }
 
         input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .upload-area { border: 2px dashed #666; padding: 15px; text-align: center; cursor: pointer; margin-bottom: 10px; background: #fafafa; position: relative; }
-        #loading-ocr { display: none; color: #007bff; font-weight: bold; margin-bottom: 5px; }
-        #prevImg { max-width: 100%; display: none; margin-top: 5px; border: 1px solid #ddd; }
+        .upload-area { border: 2px dashed #666; padding: 10px; text-align: center; cursor: pointer; margin-bottom: 10px; background: #fafafa; }
+        #prevImg { max-width: 100%; display: none; margin-top: 5px; }
+        .btn-acao { background: #28a745; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; }
         
-        .btn-acao { background: #28a745; color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        
-        .rank-item { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .barra-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 5px; }
+        .rank-item { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .barra-bg { background: #eee; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; }
         .barra-fill { height: 100%; background: #dc3545; transition: 0.5s; }
-        .hab-tag { font-size: 11px; color: #555; display: block; margin-top: 3px; font-style: italic; }
         .q-mini { display: inline-block; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; border-radius: 3px; font-size: 9px; margin: 1px; }
     </style>
 </head>
@@ -43,40 +43,41 @@
         <button id="bt8" class="btn-turma ativa" onclick="mudarTurma('8ano')">8º ANO</button>
         <button id="bt9" class="btn-turma" onclick="mudarTurma('9ano')">9º ANO</button>
     </div>
-    <button class="btn-hab-toggle" onclick="toggleHab()">⚙️ CONFIGURAR HABILIDADES</button>
+    <button class="btn-turma" style="background:#007bff; color:white; border:none;" onclick="toggleHab()">⚙️ CONFIGURAR HABILIDADES</button>
 </div>
 
-<div id="painelHab" class="habilidades-panel">
-    <h3>Mapeamento de Habilidades (<span id="habTurma">8º Ano</span>)</h3>
-    <textarea id="temasInput" rows="3" placeholder="Cole aqui as habilidades que eu te enviar..." oninput="salvarConfig()"></textarea>
+<div class="testes-nav" id="testesNav">
+    </div>
+
+<div id="painelHab" style="display:none; background:white; border:1px solid #333; padding:15px; max-width:1068px; margin:0 auto 15px;">
+    <h3>Habilidades BNCC para <span id="nomeProvaTitulo">...</span></h3>
+    <textarea id="temasInput" rows="3" placeholder="Cole as habilidades separadas por vírgula..." oninput="salvarConfig()"></textarea>
 </div>
 
 <div class="main-grid">
     <div class="col">
-        <div class="col-title">Entrada de Dados</div>
-        <input type="text" id="oficialInput" placeholder="Gabarito Oficial (Ex: ABCD...)" oninput="salvarConfig()">
+        <div class="col-title">Entrada (<span id="spanProva">...</span>)</div>
+        <input type="text" id="oficialInput" placeholder="Gabarito Oficial" oninput="salvarConfig()">
         <hr>
-        <input type="text" id="nomeAluno" placeholder="Nome Completo do Aluno">
-        
+        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
         <div class="upload-area" onpaste="colarFoto(event)">
-            <div id="loading-ocr">⏳ Lendo gabarito...</div>
-            <span>Colar Foto da Prova (Ctrl+V)</span>
+            <small id="statusOcr">Clique e cole a foto (Ctrl+V)</small>
             <img id="prevImg">
         </div>
-        
-        <input type="text" id="resAluno" placeholder="Respostas (Serão preenchidas automaticamente)">
+        <input type="text" id="resAluno" placeholder="Respostas (Automático via OCR)">
         <button class="btn-acao" onclick="salvarAluno()">SALVAR E CORRIGIR</button>
         <div id="listaAlunos" style="margin-top: 15px;"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">Análise por Habilidade</div>
+        <div class="col-title">Análise Pedagógica</div>
         <div id="graficoTemas"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">Evolução dos Testes</div>
-        <div style="text-align: center; padding: 20px; color: #999;">[ Gráfico CAED ]</div>
+        <div class="col-title">Gerenciar Blocos</div>
+        <button class="btn-add-teste" onclick="adicionarProva()">+ Novo Bloco Avaliativo</button>
+        <p style="font-size: 11px; color: #666; margin-top: 10px;">Ex: 1º Bimestre, Provão, Simulado...</p>
     </div>
 </div>
 
@@ -86,18 +87,61 @@
     const db = firebase.database();
 
     let turma = '8ano';
+    let provaAtiva = 'CAED 1';
     let fotoBase64 = "";
-
-    function toggleHab() {
-        const p = document.getElementById('painelHab');
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';
-    }
 
     function mudarTurma(t) {
         turma = t;
         document.getElementById('bt8').className = t === '8ano' ? 'btn-turma ativa' : 'btn-turma';
         document.getElementById('bt9').className = t === '9ano' ? 'btn-turma ativa' : 'btn-turma';
+        carregarProvas();
+    }
+
+    function carregarProvas() {
+        db.ref(`prof/v4/${turma}/provas_lista`).on('value', snap => {
+            const nav = document.getElementById('testesNav');
+            nav.innerHTML = "";
+            let provas = snap.val() || ["CAED 1", "CAED 2"];
+            
+            provas.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = `btn-teste ${p === provaAtiva ? 'ativa' : ''}`;
+                btn.innerHTML = `${p} <span class="btn-del-teste" onclick="excluirProva('${p}')">✖</span>`;
+                btn.onclick = (e) => { if(e.target.className !== 'btn-del-teste') selecionarProva(p); };
+                nav.appendChild(btn);
+            });
+            selecionarProva(provaAtiva || provas[0]);
+        });
+    }
+
+    function selecionarProva(nome) {
+        provaAtiva = nome;
+        document.getElementById('spanProva').innerText = nome;
+        document.getElementById('nomeProvaTitulo').innerText = nome;
         carregarConfig();
+    }
+
+    function adicionarProva() {
+        const nome = prompt("Nome da prova (ex: 1º Bimestre):");
+        if (nome) {
+            db.ref(`prof/v4/${turma}/provas_lista`).once('value', snap => {
+                let lista = snap.val() || ["CAED 1", "CAED 2"];
+                if(!lista.includes(nome)) {
+                    lista.push(nome);
+                    db.ref(`prof/v4/${turma}/provas_lista`).set(lista);
+                }
+            });
+        }
+    }
+
+    function excluirProva(nome) {
+        if(confirm(`Excluir a prova "${nome}" e todos os dados dela?`)) {
+            db.ref(`prof/v4/${turma}/provas_lista`).once('value', snap => {
+                let lista = snap.val().filter(p => p !== nome);
+                db.ref(`prof/v4/${turma}/provas_lista`).set(lista);
+                db.ref(`prof/v4/${turma}/${nome}`).remove();
+            });
+        }
     }
 
     async function colarFoto(e) {
@@ -106,38 +150,25 @@
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 fotoBase64 = ev.target.result;
-                const img = document.getElementById('prevImg');
-                img.src = fotoBase64; img.style.display = "block";
-                
-                // Iniciar Reconhecimento Automático (OCR)
-                document.getElementById('loading-ocr').style.display = "block";
-                await processarOCR(fotoBase64);
+                document.getElementById('prevImg').src = fotoBase64;
+                document.getElementById('prevImg').style.display = "block";
+                document.getElementById('statusOcr').innerText = "⏳ Lendo gabarito...";
+                const result = await Tesseract.recognize(fotoBase64, 'eng');
+                document.getElementById('resAluno').value = result.data.text.toUpperCase().replace(/[^A-E]/g, '');
+                document.getElementById('statusOcr').innerText = "✅ Leitura concluída!";
             };
             reader.readAsDataURL(item.getAsFile());
-        }
-    }
-
-    async function processarOCR(base64) {
-        try {
-            const result = await Tesseract.recognize(base64, 'eng');
-            // Filtra apenas letras A, B, C, D, E e remove espaços/quebras de linha
-            const textoLimpo = result.data.text.toUpperCase().replace(/[^A-E]/g, '');
-            document.getElementById('resAluno').value = textoLimpo;
-        } catch (error) {
-            console.error("Erro no OCR:", error);
-        } finally {
-            document.getElementById('loading-ocr').style.display = "none";
         }
     }
 
     function salvarConfig() {
         const gab = document.getElementById('oficialInput').value.toUpperCase().replace(/[^A-E]/g, '');
         const temas = document.getElementById('temasInput').value;
-        db.ref(`prof/v4/${turma}/config`).set({ gab, temas });
+        db.ref(`prof/v4/${turma}/${provaAtiva}/config`).set({ gab, temas });
     }
 
     function carregarConfig() {
-        db.ref(`prof/v4/${turma}/config`).on('value', snap => {
+        db.ref(`prof/v4/${turma}/${provaAtiva}/config`).on('value', snap => {
             const d = snap.val() || {};
             document.getElementById('oficialInput').value = d.gab || "";
             document.getElementById('temasInput').value = d.temas || "";
@@ -148,8 +179,8 @@
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
         const res = document.getElementById('resAluno').value.toUpperCase();
-        if(!nome || !res) return alert("Preencha nome e respostas!");
-        db.ref(`prof/v4/${turma}/alunos`).push({ nome, res, foto: fotoBase64 }).then(() => {
+        if(!nome || !res) return alert("Preencha os campos!");
+        db.ref(`prof/v4/${turma}/${provaAtiva}/alunos`).push({ nome, res, foto: fotoBase64 }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
             document.getElementById('prevImg').style.display = "none";
@@ -158,10 +189,9 @@
     }
 
     function ouvirAlunos() {
-        const oficial = document.getElementById('oficialInput').value.replace(/\s/g, '');
+        const oficial = document.getElementById('oficialInput').value;
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
-        
-        db.ref(`prof/v4/${turma}/alunos`).on('value', snap => {
+        db.ref(`prof/v4/${turma}/${provaAtiva}/alunos`).on('value', snap => {
             const lista = document.getElementById('listaAlunos');
             const grafico = document.getElementById('graficoTemas');
             lista.innerHTML = ""; grafico.innerHTML = "";
@@ -169,36 +199,29 @@
 
             snap.forEach(child => {
                 const a = child.val();
-                let acertos = 0;
-                let boxes = "";
-                const resA = (a.res || "").replace(/\s/g, '');
+                let acertos = 0, boxes = "";
+                const resA = a.res || "";
                 for(let i=0; i<oficial.length; i++) {
                     const ok = (resA[i] === oficial[i] && oficial[i]);
                     if(ok) acertos++; else errosCont[i+1] = (errosCont[i+1] || 0) + 1;
                     boxes += `<div class="q-mini" style="background:${ok?'#28a745':'#dc3545'};">${i+1}</div>`;
                 }
-                lista.innerHTML += `<div style="font-size:13px; margin-bottom:8px; border-bottom:1px solid #f0f0f0;">
-                    <strong>${a.nome}</strong> (${acertos}/${oficial.length})
-                    <div style="display:flex; flex-wrap:wrap;">${boxes}</div>
-                </div>`;
+                lista.innerHTML += `<div style="font-size:12px; margin-bottom:5px; border-bottom:1px solid #eee;"><strong>${a.nome}</strong> (${acertos}/${oficial.length})<div>${boxes}</div></div>`;
             });
 
             for(let i=1; i<=oficial.length; i++) {
-                let pErro = totalA > 0 ? Math.round(((errosCont[i]||0)/totalA)*100) : 0;
-                let pAcerto = 100 - pErro;
-                grafico.innerHTML += `
-                    <div class="rank-item">
-                        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
-                            <span>Questão ${i}</span>
-                            <span style="color:#28a745;">${pAcerto}% Acerto</span>
-                        </div>
-                        <span class="hab-tag">Habilidade: ${temasArr[i-1] || 'Não definida'}</span>
-                        <div class="barra-bg"><div class="barra-fill" style="width:${pErro}%;"></div></div>
-                    </div>`;
+                let p = totalA > 0 ? Math.round(((errosCont[i]||0)/totalA)*100) : 0;
+                grafico.innerHTML += `<div class="rank-item"><span style="font-size:11px;">Q${i}: ${100-p}% Acerto - <small>${temasArr[i-1]||''}</small></span><div class="barra-bg"><div class="barra-fill" style="width:${p}%;"></div></div></div>`;
             }
         });
     }
-    window.onload = carregarConfig;
+
+    function toggleHab() {
+        const p = document.getElementById('painelHab');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    }
+
+    window.onload = mudarTurma('8ano');
 </script>
 </body>
 </html>

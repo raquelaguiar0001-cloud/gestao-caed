@@ -6,58 +6,83 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 850px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .turma-btns { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-t { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; }
-        .btn-t.ativa { background: #007bff; color: white; }
-        .upload-box { border: 2px dashed #007bff; padding: 20px; text-align: center; border-radius: 10px; background: #f8fbff; cursor: pointer; margin: 10px 0; color: #007bff; font-weight: bold; }
-        #prevImg { max-width: 100%; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid #ccc; }
-        .rank-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
-        .tema-txt { font-size: 13px; color: #d9534f; font-weight: bold; width: 100%; margin-left: 90px; }
-        .barra-bg { background: #eee; height: 14px; flex: 1; border-radius: 7px; overflow: hidden; min-width: 150px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px; }
+        .turma-selector { display: flex; gap: 10px; }
+        .btn-turma { padding: 10px 20px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .btn-turma.ativa { background: #333; color: white; }
+        
+        .habilidades-box { border: 1px solid #333; padding: 10px 20px; background: white; font-weight: bold; }
+
+        .testes-nav { display: flex; gap: 20px; max-width: 1000px; margin: 0 auto 20px; }
+        .btn-teste { border: 1px solid #333; padding: 15px; background: white; cursor: pointer; font-weight: bold; text-align: center; min-width: 120px; }
+        .btn-teste.ativa { background: #eee; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
+
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 0; max-width: 1000px; margin: 0 auto; border: 1px solid #333; background: white; min-height: 500px; }
+        .col { border-right: 1px solid #333; padding: 15px; }
+        .col:last-child { border-right: none; }
+        .col-title { font-weight: bold; border-bottom: 1px solid #333; margin: -15px -15px 15px -15px; padding: 10px; text-align: center; background: #f9f9f9; }
+
+        /* Inputs e Upload */
+        input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .upload-area { border: 2px dashed #666; padding: 10px; text-align: center; cursor: pointer; margin-bottom: 10px; font-size: 12px; background: #fafafa; }
+        #prevImg { max-width: 100%; display: none; margin-top: 5px; border: 1px solid #ddd; }
+        
+        .btn-acao { background: #28a745; color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        
+        /* Lista e Gráfico */
+        .item-aluno { padding: 5px 0; border-bottom: 1px dotted #ccc; font-size: 14px; }
+        .rank-item { margin-bottom: 10px; font-size: 12px; }
+        .barra-bg { background: #eee; height: 10px; border-radius: 5px; overflow: hidden; }
         .barra-fill { height: 100%; background: #dc3545; transition: 0.5s; }
-        input, button { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 8px; box-sizing: border-box; }
-        .btn-save { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
-        .aba-nav { display: flex; gap: 15px; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
-        .aba-item { padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
-        .aba-item.ativa { color: #007bff; border-bottom: 3px solid #007bff; }
-        .q-mini { width:25px; height:25px; color:white; text-align:center; line-height:25px; border-radius:4px; font-size:10px; font-weight:bold; }
+        .q-mini { display: inline-block; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; border-radius: 3px; font-size: 9px; margin: 1px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="turma-btns">
-        <button id="bt8" class="btn-t ativa" onclick="mudarTurma('8ano')">8º ANO</button>
-        <button id="bt9" class="btn-t" onclick="mudarTurma('9ano')">9º ANO</button>
+<div class="header-top">
+    <div class="turma-selector">
+        <span style="font-weight: bold; font-size: 20px; margin-right: 10px;">Turma:</span>
+        <button id="bt8" class="btn-turma ativa" onclick="mudarTurma('8ano')">8º ANO</button>
+        <button id="bt9" class="btn-turma" onclick="mudarTurma('9ano')">9º ANO</button>
     </div>
+    <div class="habilidades-box">Habilidades</div>
+</div>
 
-    <div class="card">
-        <h3>1. Configurações Ativas (<span id="txtTurma">8º Ano</span>)</h3>
-        <input type="text" id="oficialInput" placeholder="Gabarito" oninput="salvarConfig()">
-        <input type="text" id="temasInput" placeholder="Temas das Questões" oninput="salvarConfig()">
-    </div>
+<div class="testes-nav">
+    <button class="btn-teste ativa">1º teste CAED</button>
+    <button class="btn-teste">2º teste CAED</button>
+</div>
 
-    <div class="card">
-        <h3>2. Entrada do Aluno</h3>
-        <input type="text" id="nomeAluno" placeholder="Nome Completo">
-        <div class="upload-box" onpaste="colarFoto(event)">
-            Clique aqui e Cole a Foto da Prova (Ctrl+V)
+<div class="main-grid">
+    <div class="col">
+        <div class="col-title">Alunos</div>
+        <input type="text" id="oficialInput" placeholder="Gabarito Oficial" oninput="salvarConfig()">
+        <input type="text" id="temasInput" placeholder="Temas (Separados por vírgula)" oninput="salvarConfig()">
+        <hr>
+        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
+        <div class="upload-area" onpaste="colarFoto(event)">
+            Clique e Cole a Foto (Ctrl+V)
             <img id="prevImg">
         </div>
-        <input type="text" id="resAluno" placeholder="Respostas (Ex: ABCD...)">
-        <button class="btn-save" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
+        <input type="text" id="resAluno" placeholder="Respostas do Aluno">
+        <button class="btn-acao" onclick="salvarAluno()">SALVAR E CORRIGIR</button>
+        
+        <div id="listaAlunos" style="margin-top: 15px;"></div>
     </div>
 
-    <div class="card">
-        <div class="aba-nav">
-            <div id="tab1" class="aba-item ativa" onclick="aba(1)">Resultados</div>
-            <div id="tab2" class="aba-item" onclick="aba(2)">Análise Pedagógica</div>
+    <div class="col">
+        <div class="col-title">Desempenho Geral</div>
+        <div id="graficoTemas"></div>
+    </div>
+
+    <div class="col">
+        <div class="col-title">Gráfico de desempenho dos Testes</div>
+        <canvas id="canvasGrafico" style="width: 100%; height: 200px; background: #fdfdfd; border: 1px solid #eee;"></canvas>
+        <div id="legendaGrafico" style="font-size: 11px; margin-top: 10px;">
+            <p>Alunos: 1, 2, 3, 4, 5...</p>
+            <p>Eixo X: CAED1, CAED2...</p>
         </div>
-        <div id="cont1"><div id="lista">Sincronizando...</div></div>
-        <div id="cont2" style="display:none;"><div id="graficoTemas"></div></div>
     </div>
 </div>
 
@@ -69,23 +94,10 @@
     let turma = '8ano';
     let fotoBase64 = "";
 
-    // DADOS DAS SUAS IMAGENS
-    const configsPadrao = {
-        '8ano': {
-            gab: "DBADABDDA DBA",
-            temas: "Energia Elétrica, Transformação de Energia, Fecundação Interna, Fases da Lua, Eficiência Energética, Radiação Térmica, Energias Renováveis, Hidrelétrica, Energia Cinética, Energia Potencial, Geração de Energia, Variabilidade Genética"
-        },
-        '9ano': {
-            gab: "ACB B B C A C D C",
-            temas: "Radiação Eletromagnética, Funcionamento de Lâmpadas, Cromossomo X, Estado Físico Argônio, Mudança de Estado, Cores e Luz, Sistema RGB, Mendel (Luz), Cores Primárias, Lei de Mendel"
-        }
-    };
-
     function mudarTurma(t) {
         turma = t;
-        document.getElementById('bt8').className = t === '8ano' ? 'btn-t ativa' : 'btn-t';
-        document.getElementById('bt9').className = t === '9ano' ? 'btn-t ativa' : 'btn-t';
-        document.getElementById('txtTurma').innerText = t === '8ano' ? '8º Ano' : '9º Ano';
+        document.getElementById('bt8').className = t === '8ano' ? 'btn-turma ativa' : 'btn-turma';
+        document.getElementById('bt9').className = t === '9ano' ? 'btn-turma ativa' : 'btn-turma';
         carregarConfig();
     }
 
@@ -111,8 +123,8 @@
     function carregarConfig() {
         db.ref(`prof/v4/${turma}/config`).on('value', snap => {
             const d = snap.val() || {};
-            document.getElementById('oficialInput').value = d.gab || configsPadrao[turma].gab;
-            document.getElementById('temasInput').value = d.temas || configsPadrao[turma].temas;
+            document.getElementById('oficialInput').value = d.gab || "";
+            document.getElementById('temasInput').value = d.temas || "";
             ouvirAlunos();
         });
     }
@@ -120,7 +132,8 @@
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
         const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-E]/g, '');
-        if(!nome || !res) return alert("Nome e respostas são obrigatórios!");
+        if(!nome || !res) return alert("Preencha nome e respostas!");
+        
         db.ref(`prof/v4/${turma}/alunos`).push({ nome, res, foto: fotoBase64 }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
@@ -132,43 +145,41 @@
     function ouvirAlunos() {
         const oficial = document.getElementById('oficialInput').value.replace(/\s/g, '');
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
+        
         db.ref(`prof/v4/${turma}/alunos`).on('value', snap => {
-            const lista = document.getElementById('lista');
+            const lista = document.getElementById('listaAlunos');
             const grafico = document.getElementById('graficoTemas');
             lista.innerHTML = ""; grafico.innerHTML = "";
             let errosCont = {}, totalA = snap.numChildren();
 
             snap.forEach(child => {
-                const a = child.val(); let acertos = 0, boxes = "";
+                const a = child.val();
+                let acertos = 0;
+                let boxes = "";
                 const resA = (a.res || "").replace(/\s/g, '');
+                
                 for(let i=0; i<oficial.length; i++) {
                     const ok = (resA[i] === oficial[i] && oficial[i]);
                     if(ok) acertos++; else errosCont[i+1] = (errosCont[i+1] || 0) + 1;
                     boxes += `<div class="q-mini" style="background:${ok?'#28a745':'#dc3545'};">${i+1}</div>`;
                 }
-                lista.innerHTML += `<div style="border-bottom:1px solid #eee; padding:10px 0;">
-                    <strong>${a.nome}</strong> - Nota: ${acertos}/${oficial.length}
-                    <div style="display:flex;gap:4px;margin-top:8px;">${boxes}</div>
+                
+                lista.innerHTML += `<div class="item-aluno">
+                    <strong>${a.nome}</strong> (${acertos}/${oficial.length})
+                    <div style="display:flex; flex-wrap:wrap;">${boxes}</div>
                 </div>`;
             });
 
             for(let i=1; i<=oficial.length; i++) {
                 let p = totalA > 0 ? Math.round(((errosCont[i]||0)/totalA)*100) : 0;
                 grafico.innerHTML += `<div class="rank-item">
-                    <span style="width:85px; font-weight:bold;">Q${i}: ${p}% erro</span>
+                    <span>Q${i}: ${p}% erro - <small>${temasArr[i-1] || '---'}</small></span>
                     <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
-                    <div class="tema-txt">🎯 ${temasArr[i-1] || 'Sem tema'}</div>
                 </div>`;
             }
         });
     }
 
-    function aba(n) {
-        document.getElementById('cont1').style.display = n===1 ? 'block' : 'none';
-        document.getElementById('cont2').style.display = n===2 ? 'block' : 'none';
-        document.getElementById('tab1').className = n===1 ? 'aba-item ativa' : 'aba-item';
-        document.getElementById('tab2').className = n===2 ? 'aba-item ativa' : 'aba-item';
-    }
     window.onload = carregarConfig;
 </script>
 </body>

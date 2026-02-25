@@ -8,42 +8,31 @@
     <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
-        
-        /* Cabeçalho Fixo e Responsivo */
         .header-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 1250px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .turma-selector { display: flex; gap: 8px; border-right: 2px solid #eee; padding-right: 15px; }
         .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; }
-        
-        /* Botões Turma */
         .btn-turma { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; }
         .btn-turma.ativa { background: #333; color: white; }
-        
-        /* Botões Blocos (Cores Corrigidas) */
-        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-teste.ativa { background: #007bff !important; color: white !important; font-weight: bold; }
+        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
+        .btn-teste.ativa { background: #007bff !important; color: white !important; }
         .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .del-x { color: #ff4d4d; margin-left: 5px; font-size: 14px; }
-
-        /* Grid Principal Mantido */
         .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; max-width: 1250px; margin: 0 auto; }
         .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
         .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
-
-        /* Áreas de Colagem Restauradas */
-        .upload-zone { border: 2px dashed #007bff; padding: 15px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 90px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #007bff; }
-        
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: auto; }
-        
-        /* Barras de Desempenho */
+        .upload-zone { border: 2px dashed #007bff; padding: 15px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 80px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #007bff; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: 10px; }
         .rank-item { margin-bottom: 12px; }
         .barra-bg { background: #eee; height: 16px; border-radius: 8px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
         .barra-fill { height: 100%; background: #28a745; transition: 0.4s ease; }
         .item-aluno { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .status-ocr { font-size: 10px; color: #666; margin-top: 5px; }
+        .acoes-aluno { display: flex; gap: 10px; }
+        .btn-edit { color: #007bff; cursor: pointer; font-size: 12px; border: none; background: none; text-decoration: underline; }
+        .btn-excluir { color: #dc3545; cursor: pointer; font-size: 12px; border: none; background: none; text-decoration: underline; }
     </style>
 </head>
-<body>
+<body onpaste="capturarPasteGlobal(event)">
 
 <div class="header-top">
     <div class="turma-selector">
@@ -55,17 +44,17 @@
 </div>
 
 <div class="main-grid">
-    <div class="col">
+    <div class="col" id="col1">
         <div class="col-title">1. Alunos e Configuração</div>
-        <div class="upload-zone" onpaste="lerImagem(event, 'oficialInput')">
-            <span>Clique aqui e cole o GABARITO OFICIAL</span>
+        <div class="upload-zone" onclick="document.getElementById('oficialInput').focus()">
+            <span>CLIQUE E COLE O GABARITO OFICIAL (Ctrl+V)</span>
         </div>
         <input type="text" id="oficialInput" placeholder="Gabarito Mestre" oninput="salvarDB()">
         <textarea id="temasInput" rows="3" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarDB()"></textarea>
         <hr>
         <input type="text" id="nomeAluno" placeholder="Nome Completo do Aluno">
-        <div class="upload-zone" onpaste="lerImagem(event, 'resAluno')">
-            <span>Clique aqui e cole a PROVA DO ALUNO</span>
+        <div class="upload-zone" onclick="document.getElementById('resAluno').focus()">
+            <span>CLIQUE E COLE A PROVA DO ALUNO (Ctrl+V)</span>
         </div>
         <input type="text" id="resAluno" placeholder="Respostas do Aluno">
         <button class="btn-acao" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
@@ -89,6 +78,7 @@
 
     let turmaAtual = '8ano';
     let blocoAtual = 'CAED 1';
+    let editandoId = null;
 
     function trocarTurma(t) {
         turmaAtual = t;
@@ -103,7 +93,6 @@
             const nav = document.getElementById('testesNav');
             nav.innerHTML = "";
             let lista = snap.val() || ["CAED 1", "CAED 2"];
-            
             lista.forEach(nome => {
                 const btn = document.createElement('button');
                 btn.className = `btn-teste ${nome === blocoAtual ? 'ativa' : ''}`;
@@ -112,7 +101,6 @@
                     if(e.target.className !== 'del-x') {
                         blocoAtual = nome;
                         carregarAbas(); 
-                        carregarConfig();
                     }
                 };
                 nav.appendChild(btn);
@@ -121,13 +109,14 @@
         });
     }
 
-    async function lerImagem(e, inputId) {
+    // NOVA FUNÇÃO DE PASTE GLOBAL PARA EVITAR ERROS DE FOCO
+    async function capturarPasteGlobal(e) {
         const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
         if (item) {
+            const inputId = document.activeElement.id === "resAluno" ? "resAluno" : "oficialInput";
             const blob = item.getAsFile();
             const reader = new FileReader();
             reader.onload = async (ev) => {
-                // OCR com limpeza de caracteres ? e espaços
                 const result = await Tesseract.recognize(ev.target.result, 'eng');
                 const textoLimpo = result.data.text.toUpperCase().replace(/[^A-D]/g, '');
                 document.getElementById(inputId).value = textoLimpo;
@@ -157,10 +146,31 @@
         const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-D]/g, '');
         if(!nome || !res) return alert("Preencha Nome e Respostas!");
         
-        db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).push({ nome, res }).then(() => {
-            document.getElementById('nomeAluno').value = "";
-            document.getElementById('resAluno').value = "";
-        });
+        const ref = db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`);
+        if(editandoId) {
+            ref.child(editandoId).update({ nome, res }).then(() => {
+                editandoId = null;
+                document.querySelector('.btn-acao').innerText = "✅ CORRIGIR E SALVAR";
+            });
+        } else {
+            ref.push({ nome, res });
+        }
+        document.getElementById('nomeAluno').value = "";
+        document.getElementById('resAluno').value = "";
+    }
+
+    function editarAluno(id, nome, res) {
+        editandoId = id;
+        document.getElementById('nomeAluno').value = nome;
+        document.getElementById('resAluno').value = res;
+        document.getElementById('nomeAluno').focus();
+        document.querySelector('.btn-acao').innerText = "💾 ATUALIZAR ALUNO";
+    }
+
+    function excluirAluno(id) {
+        if(confirm("Deseja excluir este aluno?")) {
+            db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).child(id).remove();
+        }
     }
 
     function atualizarResultados() {
@@ -176,14 +186,20 @@
             snap.forEach(child => {
                 const a = child.val();
                 let acertos = 0;
-                // Comparação exata sem delay
                 for(let i=0; i < oficial.length; i++) {
                     if(a.res[i] === oficial[i] && oficial[i]) {
                         acertos++;
                         acertosPorQ[i+1] = (acertosPorQ[i+1] || 0) + 1;
                     }
                 }
-                lista.innerHTML += `<div class="item-aluno"><span>${a.nome}</span> <b style="color:#28a745">${acertos}/${oficial.length}</b></div>`;
+                lista.innerHTML += `
+                <div class="item-aluno">
+                    <span><b>${a.nome}</b> (${acertos}/${oficial.length})</span>
+                    <div class="acoes-aluno">
+                        <button class="btn-edit" onclick="editarAluno('${child.key}', '${a.nome}', '${a.res}')">Editar</button>
+                        <button class="btn-excluir" onclick="excluirAluno('${child.key}')">Excluir</button>
+                    </div>
+                </div>`;
             });
 
             for(let i=1; i <= oficial.length; i++) {

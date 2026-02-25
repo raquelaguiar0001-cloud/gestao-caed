@@ -8,8 +8,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
+        
+        /* Menu Superior */
         .header-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 1400px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .turma-selector { display: flex; gap: 8px; border-right: 2px solid #eee; padding-right: 15px; }
         .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; overflow-x: auto; }
@@ -20,30 +23,32 @@
         .btn-evolucao { border-color: #6a1b9a; color: #6a1b9a; }
 
         .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; white-space: nowrap; }
-        .btn-teste.ativa { background: #007bff !important; color: white !important; }
+        .btn-teste.ativa { background: #007bff !important; color: white !important; font-weight: bold; }
         .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .del-x { color: #ff4d4d; margin-left: 8px; font-weight: bold; }
 
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 15px; max-width: 1450px; margin: 0 auto; }
-        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; }
+        /* Grade Principal */
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 15px; max-width: 1500px; margin: 0 auto; }
+        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
         .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
-
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: 10px; }
         
+        label { font-size: 11px; font-weight: bold; margin-top: 10px; display: block; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: auto; }
+        
+        /* Raio-X de Questões */
         .mapa-respostas { display: flex; gap: 3px; margin-top: 8px; flex-wrap: wrap; }
-        .q-box { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border-radius: 3px; color: white; }
+        .q-box { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; border-radius: 3px; color: white; }
         .q-acerto { background: #28a745; }
         .q-erro { background: #dc3545; }
         
-        .barra-bg { background: #eee; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 4px; }
+        .barra-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
         .barra-fill { height: 100%; background: #28a745; transition: 0.4s; }
 
-        /* Estilo da Evolução Individual */
-        #painelEvolucao { display: none; background: white; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 1450px; margin: 0 auto; }
-        .selecao-testes { display: flex; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 10px; border-radius: 5px; flex-wrap: wrap; }
+        /* Painel de Evolução */
+        #painelEvolucao { display: none; background: white; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 1500px; margin: 0 auto; }
         .tabela-ev { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .tabela-ev th, .tabela-ev td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .tabela-ev th, .tabela-ev td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; }
         .tabela-ev th { background: #f4f4f4; }
     </style>
 </head>
@@ -62,26 +67,26 @@
 
 <div id="painelEvolucao">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>📊 Evolução Individual dos Alunos</h3>
-        <button onclick="trocarTurma(turmaAtual)" style="cursor:pointer">Voltar para Testes ✖</button>
+        <h3>📊 Evolução Individual por Aluno</h3>
+        <button onclick="trocarTurma(turmaAtual)" style="cursor:pointer; border:1px solid #333; background: #eee; padding:5px 10px; border-radius:4px;">Voltar para Testes ✖</button>
     </div>
-    <p style="font-size:13px;">Selecione os testes para comparar o percentual de acerto de cada aluno:</p>
-    <div class="selecao-testes" id="checkTestes"></div>
+    <p style="font-size:13px;">Selecione os testes para comparar:</p>
+    <div id="checkTestes" style="margin-bottom:15px; display:flex; gap:15px; flex-wrap:wrap; background:#f9f9f9; padding:10px; border-radius:5px;"></div>
     <div id="areaTabelaEvolucao" style="overflow-x: auto;"></div>
 </div>
 
 <div class="main-grid" id="gridPrincipal">
     <div class="col">
         <div class="col-title">🔬 Entrada de Dados</div>
-        <label style="font-size:11px; font-weight:bold;">GABARITO MESTRE:</label>
-        <input type="text" id="oficialInput" placeholder="Ex: ABCD..." oninput="salvarDB()" maxlength="12">
-        <label style="font-size:11px; font-weight:bold;">HABILIDADES POR QUESTÃO:</label>
-        <textarea id="temasInput" rows="3" placeholder="Tema Q1, Tema Q2..." oninput="salvarDB()"></textarea>
+        <label>GABARITO MESTRE (O sistema adapta o total de questões automaticamente):</label>
+        <input type="text" id="oficialInput" placeholder="Ex: ABCDABCD..." oninput="salvarDB()">
+        <label>TEMAS DAS QUESTÕES (Separe por vírgula):</label>
+        <textarea id="temasInput" rows="3" placeholder="Tema 1, Tema 2..." oninput="salvarDB()"></textarea>
         <hr>
-        <label style="font-size:11px; font-weight:bold;">NOME DO ALUNO:</label>
+        <label>NOME DO ALUNO:</label>
         <input type="text" id="nomeAluno" placeholder="Nome Completo">
-        <label style="font-size:11px; font-weight:bold;">RESPOSTAS DO ALUNO:</label>
-        <input type="text" id="resAluno" placeholder="Ex: AABB..." maxlength="12">
+        <label>RESPOSTAS DO ALUNO:</label>
+        <input type="text" id="resAluno" placeholder="Ex: AABB..." onkeypress="if(event.key==='Enter') salvarAluno()">
         <button class="btn-acao" id="btnSalvar" onclick="salvarAluno()">✅ SALVAR RESULTADO</button>
     </div>
 
@@ -91,7 +96,7 @@
     </div>
 
     <div class="col">
-        <div class="col-title">📝 Raio-X dos Alunos</div>
+        <div class="col-title">📝 Raio-X Individual</div>
         <div id="listaAlunos"></div>
     </div>
 </div>
@@ -148,7 +153,6 @@
         const nome = document.getElementById('nomeAluno').value.toUpperCase().trim();
         const res = document.getElementById('resAluno').value.toUpperCase().replace(/\s/g, '');
         if(!nome || !res) return alert("Preencha Nome e Respostas!");
-        
         const ref = db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`);
         if(editandoId) {
             ref.child(editandoId).update({ nome, res }).then(() => {
@@ -156,7 +160,6 @@
                 document.getElementById('btnSalvar').innerText = "✅ SALVAR RESULTADO";
             });
         } else { ref.push({ nome, res }); }
-        
         document.getElementById('nomeAluno').value = "";
         document.getElementById('resAluno').value = "";
     }
@@ -164,6 +167,7 @@
     function atualizarResultados() {
         const oficial = document.getElementById('oficialInput').value;
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
+        const totalQ = oficial.length;
         
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).on('value', snap => {
             const lista = document.getElementById('listaAlunos'), grafico = document.getElementById('graficoTemas');
@@ -174,23 +178,23 @@
                 const a = child.val();
                 let acCount = 0;
                 let mapa = '<div class="mapa-respostas">';
-                for(let i=0; i < 12; i++) {
+                for(let i=0; i < totalQ; i++) {
                     const isCorreto = (a.res[i] === oficial[i] && oficial[i]);
                     if(isCorreto) { acCount++; acertosPorQ[i+1] = (acertosPorQ[i+1] || 0) + 1; }
-                    mapa += `<div class="q-box ${isCorreto ? 'q-acerto' : 'q-erro'}">Q${i+1}</div>`;
+                    mapa += `<div class="q-box ${isCorreto ? 'q-acerto' : 'q-erro'}" title="Questão ${i+1}">${i+1}</div>`;
                 }
                 mapa += '</div>';
-                lista.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;">
-                    <div style="display:flex; justify-content:space-between"><b>${a.nome}</b> <span>${acCount}/12</span></div>
+                lista.innerHTML += `<div class="item-aluno">
+                    <div style="display:flex; justify-content:space-between"><b>${a.nome}</b> <span>${acCount}/${totalQ}</span></div>
                     ${mapa}
-                    <div style="margin-top:5px; font-size:11px; color:gray">
-                        <span style="cursor:pointer; text-decoration:underline" onclick="editarAluno('${child.key}','${a.nome}','${a.res}')">Editar</span> | 
-                        <span style="cursor:pointer; text-decoration:underline; color:red" onclick="excluirAluno('${child.key}')">Remover</span>
+                    <div style="margin-top:5px; font-size:11px;">
+                        <span style="color:blue; cursor:pointer" onclick="editarAluno('${child.key}','${a.nome}','${a.res}')">Editar</span> | 
+                        <span style="color:red; cursor:pointer" onclick="excluirAluno('${child.key}')">Remover</span>
                     </div>
                 </div>`;
             });
 
-            for(let i=1; i <= 12; i++) {
+            for(let i=1; i <= totalQ; i++) {
                 let p = totalA > 0 ? Math.round(((acertosPorQ[i]||0)/totalA)*100) : 0;
                 grafico.innerHTML += `<div style="margin-bottom:8px;"><div style="display:flex; justify-content:space-between; font-size:11px;">
                     <span><b>${i}.</b> ${temasArr[i-1] || '---'}</span><b>${p}%</b></div>
@@ -207,65 +211,59 @@
         db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
             const area = document.getElementById('checkTestes');
             area.innerHTML = "";
-            const lista = snap.val() || [];
-            lista.forEach(nome => {
-                area.innerHTML += `<label style="margin-right:15px; cursor:pointer"><input type="checkbox" checked value="${nome}" onchange="renderizarTabelaEvolucao()"> ${nome}</label>`;
+            (snap.val() || []).forEach(nome => {
+                area.innerHTML += `<label style="cursor:pointer"><input type="checkbox" checked value="${nome}" onchange="renderizarTabelaEvolucao()"> ${nome}</label>`;
             });
             renderizarTabelaEvolucao();
         });
     }
 
     async function renderizarTabelaEvolucao() {
-        const testesSelecionados = Array.from(document.querySelectorAll('#checkTestes input:checked')).map(cb => cb.value);
+        const selecionados = Array.from(document.querySelectorAll('#checkTestes input:checked')).map(cb => cb.value);
         const areaTabela = document.getElementById('areaTabelaEvolucao');
-        let dadosPorAluno = {}; 
+        let dadosAlunos = {}; 
 
-        for (const teste of testesSelecionados) {
-            const snapshot = await db.ref(`prof/v4/${turmaAtual}/${teste}`).once('value');
-            const config = snapshot.child('config').val() || {};
-            const alunos = snapshot.child('alunos').val() || {};
-            const oficial = config.gab || "";
-
+        for (const teste of selecionados) {
+            const snap = await db.ref(`prof/v4/${turmaAtual}/${teste}`).once('value');
+            const oficial = snap.child('config/gab').val() || "";
+            const alunos = snap.child('alunos').val() || {};
             Object.values(alunos).forEach(a => {
-                let acertos = 0;
-                for(let i=0; i<oficial.length; i++) if(a.res[i] === oficial[i]) acertos++;
-                let porc = oficial.length > 0 ? Math.round((acertos / oficial.length) * 100) : 0;
-                if(!dadosPorAluno[a.nome]) dadosPorAluno[a.nome] = {};
-                dadosPorAluno[a.nome][teste] = porc;
+                let ac = 0;
+                for(let i=0; i<oficial.length; i++) if(a.res[i] === oficial[i]) ac++;
+                let porc = oficial.length > 0 ? Math.round((ac / oficial.length) * 100) : 0;
+                if(!dadosAlunos[a.nome]) dadosAlunos[a.nome] = {};
+                dadosAlunos[a.nome][teste] = porc;
             });
         }
 
         let html = `<table class="tabela-ev"><thead><tr><th>Aluno</th>`;
-        testesSelecionados.forEach(t => html += `<th>${t}</th>`);
+        selecionados.forEach(t => html += `<th>${t}</th>`);
         html += `</tr></thead><tbody>`;
-
-        Object.keys(dadosPorAluno).sort().forEach(nome => {
+        Object.keys(dadosAlunos).sort().forEach(nome => {
             html += `<tr><td style="text-align:left"><b>${nome}</b></td>`;
-            testesSelecionados.forEach(teste => {
-                let nota = dadosPorAluno[nome][teste];
+            selecionados.forEach(t => {
+                let nota = dadosAlunos[nome][t];
                 let cor = nota >= 60 ? "#28a745" : "#dc3545";
                 html += `<td style="color:${cor}; font-weight:bold">${nota !== undefined ? nota + '%' : '-'}</td>`;
             });
             html += `</tr>`;
         });
-        html += `</tbody></table>`;
-        areaTabela.innerHTML = html;
+        areaTabela.innerHTML = html + `</tbody></table>`;
     }
 
     function baixarResultados() {
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}`).once('value', snap => {
-            const config = snap.child('config').val() || {};
+            const oficial = snap.child('config/gab').val() || "";
             const alunos = snap.child('alunos').val() || {};
-            const oficial = config.gab || "";
             const dadosExcel = Object.values(alunos).map(a => {
-                let acertos = 0;
-                for(let i=0; i<oficial.length; i++) if(a.res[i] === oficial[i]) acertos++;
-                return { "Aluno": a.nome, "Acertos": acertos, "%": ((acertos/oficial.length)*100).toFixed(1)+"%" };
+                let ac = 0;
+                for(let i=0; i<oficial.length; i++) if(a.res[i] === oficial[i]) ac++;
+                return { "Aluno": a.nome, "Acertos": ac, "Total": oficial.length, "% Aproveitamento": ((ac/oficial.length)*100).toFixed(1)+"%" };
             });
             const ws = XLSX.utils.json_to_sheet(dadosExcel);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Resultados");
-            XLSX.writeFile(wb, `Resultados_${turmaAtual}_${blocoAtual}.xlsx`);
+            XLSX.writeFile(wb, `Monitor_${turmaAtual}_${blocoAtual}.xlsx`);
         });
     }
 
@@ -273,12 +271,12 @@
         const nome = prompt("Nome do novo bloco:");
         if(nome) db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
             let lista = snap.val() || ["CAED 1"];
-            lista.push(nome); db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
+            if(!lista.includes(nome)) { lista.push(nome); db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista); }
         });
     }
 
     function deletarBloco(nome) {
-        if(confirm(`Excluir ${nome}?`)) db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
+        if(confirm(`Excluir bloco ${nome}?`)) db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
             let lista = snap.val().filter(p => p !== nome);
             db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
             db.ref(`prof/v4/${turmaAtual}/${nome}`).remove();
@@ -293,7 +291,7 @@
     }
 
     function excluirAluno(id) {
-        if(confirm("Remover aluno?")) db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).child(id).remove();
+        if(confirm("Remover este aluno?")) db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).child(id).remove();
     }
 
     window.onload = () => trocarTurma('8ano');

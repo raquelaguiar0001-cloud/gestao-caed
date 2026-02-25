@@ -10,29 +10,35 @@
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
         .header-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 1250px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .turma-selector { display: flex; gap: 8px; border-right: 2px solid #eee; padding-right: 15px; }
-        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; }
+        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; overflow-x: auto; }
         .btn-turma { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; }
         .btn-turma.ativa { background: #333; color: white; }
-        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
+        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; white-space: nowrap; }
         .btn-teste.ativa { background: #007bff !important; color: white !important; }
         .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .del-x { color: #ff4d4d; margin-left: 5px; font-size: 14px; }
+        .del-x { color: #ff4d4d; margin-left: 5px; cursor: pointer; }
+        
         .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; max-width: 1250px; margin: 0 auto; }
-        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
+        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; position: relative; }
         .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
-        .upload-zone { border: 2px dashed #007bff; padding: 15px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 80px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #007bff; }
+        
+        /* Áreas de Colagem com Foco Forçado */
+        .upload-zone { border: 2px dashed #007bff; padding: 20px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 80px; transition: 0.3s; }
+        .upload-zone:focus { background: #eef6ff; border-color: #0056b3; outline: none; }
+        .upload-zone span { pointer-events: none; }
+
         input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: 10px; }
-        .rank-item { margin-bottom: 12px; }
+        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; }
+        
         .barra-bg { background: #eee; height: 16px; border-radius: 8px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
-        .barra-fill { height: 100%; background: #28a745; transition: 0.4s ease; }
+        .barra-fill { height: 100%; background: #28a745; transition: 0.4s; }
         .item-aluno { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .acoes-aluno { display: flex; gap: 10px; }
-        .btn-edit { color: #007bff; cursor: pointer; font-size: 12px; border: none; background: none; text-decoration: underline; }
-        .btn-excluir { color: #dc3545; cursor: pointer; font-size: 12px; border: none; background: none; text-decoration: underline; }
+        .btn-edit { color: #007bff; cursor: pointer; margin-right: 10px; border: none; background: none; text-decoration: underline; }
+        .btn-excluir { color: #dc3545; cursor: pointer; border: none; background: none; text-decoration: underline; }
+        #status-info { color: #007bff; font-weight: bold; font-size: 12px; }
     </style>
 </head>
-<body onpaste="capturarPasteGlobal(event)">
+<body>
 
 <div class="header-top">
     <div class="turma-selector">
@@ -44,29 +50,33 @@
 </div>
 
 <div class="main-grid">
-    <div class="col" id="col1">
-        <div class="col-title">1. Alunos e Configuração</div>
-        <div class="upload-zone" onclick="document.getElementById('oficialInput').focus()">
-            <span>CLIQUE E COLE O GABARITO OFICIAL (Ctrl+V)</span>
+    <div class="col">
+        <div class="col-title">1. Configuração e Entrada</div>
+        <div id="status-info">Aguardando ação...</div>
+        
+        <div class="upload-zone" tabindex="0" onpaste="colarImagem(event, 'oficialInput')" onclick="this.focus()">
+            <span>Clique aqui e cole (Ctrl+V)<br><b>GABARITO OFICIAL</b></span>
         </div>
         <input type="text" id="oficialInput" placeholder="Gabarito Mestre" oninput="salvarDB()">
-        <textarea id="temasInput" rows="3" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarDB()"></textarea>
+        <textarea id="temasInput" rows="2" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarDB()"></textarea>
+        
         <hr>
-        <input type="text" id="nomeAluno" placeholder="Nome Completo do Aluno">
-        <div class="upload-zone" onclick="document.getElementById('resAluno').focus()">
-            <span>CLIQUE E COLE A PROVA DO ALUNO (Ctrl+V)</span>
+        
+        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
+        <div class="upload-zone" tabindex="0" onpaste="colarImagem(event, 'resAluno')" onclick="this.focus()">
+            <span>Clique aqui e cole (Ctrl+V)<br><b>PROVA DO ALUNO</b></span>
         </div>
-        <input type="text" id="resAluno" placeholder="Respostas do Aluno">
-        <button class="btn-acao" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
+        <input type="text" id="resAluno" placeholder="Respostas Detectadas">
+        <button class="btn-acao" onclick="salvarAluno()">✅ SALVAR RESULTADO</button>
     </div>
 
     <div class="col">
-        <div class="col-title">2. Desempenho Geral</div>
+        <div class="col-title">2. Desempenho por Questão</div>
         <div id="graficoTemas"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">3. Resultados da Turma</div>
+        <div class="col-title">3. Lista da Turma</div>
         <div id="listaAlunos"></div>
     </div>
 </div>
@@ -76,9 +86,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let turmaAtual = '8ano';
-    let blocoAtual = 'CAED 1';
-    let editandoId = null;
+    let turmaAtual = '8ano', blocoAtual = 'CAED 1', editandoId = null;
 
     function trocarTurma(t) {
         turmaAtual = t;
@@ -88,41 +96,45 @@
     }
 
     function carregarAbas() {
-        db.ref(`prof/v4/${turmaAtual}/provas_lista`).off();
         db.ref(`prof/v4/${turmaAtual}/provas_lista`).on('value', snap => {
             const nav = document.getElementById('testesNav');
             nav.innerHTML = "";
-            let lista = snap.val() || ["CAED 1", "CAED 2"];
+            let lista = snap.val() || ["CAED 1"];
             lista.forEach(nome => {
                 const btn = document.createElement('button');
                 btn.className = `btn-teste ${nome === blocoAtual ? 'ativa' : ''}`;
                 btn.innerHTML = `${nome} <span class="del-x" onclick="deletarBloco('${nome}')">✖</span>`;
-                btn.onclick = (e) => { 
-                    if(e.target.className !== 'del-x') {
-                        blocoAtual = nome;
-                        carregarAbas(); 
-                    }
-                };
+                btn.onclick = (e) => { if(e.target.className !== 'del-x') { blocoAtual = nome; carregarAbas(); } };
                 nav.appendChild(btn);
             });
             carregarConfig();
         });
     }
 
-    // NOVA FUNÇÃO DE PASTE GLOBAL PARA EVITAR ERROS DE FOCO
-    async function capturarPasteGlobal(e) {
+    // FUNÇÃO DE COLAGEM REFORÇADA
+    async function colarImagem(e, inputId) {
+        e.preventDefault();
         const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
+        
         if (item) {
-            const inputId = document.activeElement.id === "resAluno" ? "resAluno" : "oficialInput";
+            document.getElementById('status-info').innerText = "⌛ Lendo imagem... aguarde.";
             const blob = item.getAsFile();
             const reader = new FileReader();
+            
             reader.onload = async (ev) => {
-                const result = await Tesseract.recognize(ev.target.result, 'eng');
-                const textoLimpo = result.data.text.toUpperCase().replace(/[^A-D]/g, '');
-                document.getElementById(inputId).value = textoLimpo;
-                if(inputId === 'oficialInput') salvarDB();
+                try {
+                    const result = await Tesseract.recognize(ev.target.result, 'eng');
+                    const textoLimpo = result.data.text.toUpperCase().replace(/[^A-D]/g, '');
+                    document.getElementById(inputId).value = textoLimpo;
+                    document.getElementById('status-info').innerText = "✅ Leitura concluída!";
+                    if(inputId === 'oficialInput') salvarDB();
+                } catch (err) {
+                    document.getElementById('status-info').innerText = "❌ Erro na leitura.";
+                }
             };
             reader.readAsDataURL(blob);
+        } else {
+            alert("Nenhuma imagem detectada. Use Ctrl+C em uma imagem antes de colar.");
         }
     }
 
@@ -144,33 +156,18 @@
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase().trim();
         const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-D]/g, '');
-        if(!nome || !res) return alert("Preencha Nome e Respostas!");
+        if(!nome || !res) return alert("Nome e Respostas são obrigatórios!");
         
         const ref = db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`);
         if(editandoId) {
             ref.child(editandoId).update({ nome, res }).then(() => {
                 editandoId = null;
-                document.querySelector('.btn-acao').innerText = "✅ CORRIGIR E SALVAR";
+                document.querySelector('.btn-acao').innerText = "✅ SALVAR RESULTADO";
             });
-        } else {
-            ref.push({ nome, res });
-        }
+        } else { ref.push({ nome, res }); }
+        
         document.getElementById('nomeAluno').value = "";
         document.getElementById('resAluno').value = "";
-    }
-
-    function editarAluno(id, nome, res) {
-        editandoId = id;
-        document.getElementById('nomeAluno').value = nome;
-        document.getElementById('resAluno').value = res;
-        document.getElementById('nomeAluno').focus();
-        document.querySelector('.btn-acao').innerText = "💾 ATUALIZAR ALUNO";
-    }
-
-    function excluirAluno(id) {
-        if(confirm("Deseja excluir este aluno?")) {
-            db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).child(id).remove();
-        }
     }
 
     function atualizarResultados() {
@@ -178,8 +175,7 @@
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
         
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).on('value', snap => {
-            const lista = document.getElementById('listaAlunos');
-            const grafico = document.getElementById('graficoTemas');
+            const lista = document.getElementById('listaAlunos'), grafico = document.getElementById('graficoTemas');
             lista.innerHTML = ""; grafico.innerHTML = "";
             let acertosPorQ = {}, totalA = snap.numChildren();
 
@@ -195,7 +191,7 @@
                 lista.innerHTML += `
                 <div class="item-aluno">
                     <span><b>${a.nome}</b> (${acertos}/${oficial.length})</span>
-                    <div class="acoes-aluno">
+                    <div>
                         <button class="btn-edit" onclick="editarAluno('${child.key}', '${a.nome}', '${a.res}')">Editar</button>
                         <button class="btn-excluir" onclick="excluirAluno('${child.key}')">Excluir</button>
                     </div>
@@ -203,39 +199,46 @@
             });
 
             for(let i=1; i <= oficial.length; i++) {
-                let pAcerto = totalA > 0 ? Math.round(((acertosPorQ[i]||0)/totalA)*100) : 0;
+                let p = totalA > 0 ? Math.round(((acertosPorQ[i]||0)/totalA)*100) : 0;
                 grafico.innerHTML += `
                     <div class="rank-item">
                         <div style="display:flex; justify-content:space-between; font-size:11px;">
                             <span>Q${i}: ${temasArr[i-1] || '---'}</span>
-                            <b>${pAcerto}% acerto</b>
+                            <b>${p}% acerto</b>
                         </div>
-                        <div class="barra-bg"><div class="barra-fill" style="width:${pAcerto}%"></div></div>
+                        <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
                     </div>`;
             }
         });
     }
 
+    function editarAluno(id, nome, res) {
+        editandoId = id;
+        document.getElementById('nomeAluno').value = nome;
+        document.getElementById('resAluno').value = res;
+        document.querySelector('.btn-acao').innerText = "💾 ATUALIZAR ALUNO";
+    }
+
+    function excluirAluno(id) {
+        if(confirm("Excluir este aluno?")) db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).child(id).remove();
+    }
+
     function novoBloco() {
-        const nome = prompt("Nome do novo bloco:");
+        const nome = prompt("Nome do bloco:");
         if(nome) {
             db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
-                let lista = snap.val() || ["CAED 1", "CAED 2"];
-                if(!lista.includes(nome)) {
-                    lista.push(nome);
-                    db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
-                }
+                let lista = snap.val() || ["CAED 1"];
+                if(!lista.includes(nome)) { lista.push(nome); db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista); }
             });
         }
     }
 
     function deletarBloco(nome) {
-        if(confirm(`Excluir bloco "${nome}"?`)) {
+        if(confirm(`Excluir "${nome}"?`)) {
             db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
                 let lista = snap.val().filter(p => p !== nome);
                 db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
                 db.ref(`prof/v4/${turmaAtual}/${nome}`).remove();
-                if(blocoAtual === nome) blocoAtual = lista[0];
             });
         }
     }

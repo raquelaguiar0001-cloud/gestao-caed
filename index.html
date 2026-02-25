@@ -5,36 +5,34 @@
     <title>Scanner Pedagógico | Raquel Aguiar</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto 20px; }
         .turma-selector { display: flex; gap: 10px; }
         .btn-turma { padding: 10px 20px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 5px; }
         .btn-turma.ativa { background: #333; color: white; }
         
-        .habilidades-box { border: 1px solid #333; padding: 10px 20px; background: white; font-weight: bold; }
+        .habilidades-panel { background: white; border: 1px solid #333; padding: 15px; margin: 0 auto 20px; max-width: 1068px; display: none; }
+        .btn-hab-toggle { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; }
 
-        .testes-nav { display: flex; gap: 20px; max-width: 1000px; margin: 0 auto 20px; }
-        .btn-teste { border: 1px solid #333; padding: 15px; background: white; cursor: pointer; font-weight: bold; text-align: center; min-width: 120px; }
-        .btn-teste.ativa { background: #eee; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
-
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 0; max-width: 1000px; margin: 0 auto; border: 1px solid #333; background: white; min-height: 500px; }
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 0; max-width: 1100px; margin: 0 auto; border: 1px solid #333; background: white; min-height: 500px; }
         .col { border-right: 1px solid #333; padding: 15px; }
         .col:last-child { border-right: none; }
         .col-title { font-weight: bold; border-bottom: 1px solid #333; margin: -15px -15px 15px -15px; padding: 10px; text-align: center; background: #f9f9f9; }
 
-        /* Inputs e Upload */
-        input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .upload-area { border: 2px dashed #666; padding: 10px; text-align: center; cursor: pointer; margin-bottom: 10px; font-size: 12px; background: #fafafa; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .upload-area { border: 2px dashed #666; padding: 15px; text-align: center; cursor: pointer; margin-bottom: 10px; background: #fafafa; position: relative; }
+        #loading-ocr { display: none; color: #007bff; font-weight: bold; margin-bottom: 5px; }
         #prevImg { max-width: 100%; display: none; margin-top: 5px; border: 1px solid #ddd; }
         
         .btn-acao { background: #28a745; color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; }
         
-        /* Lista e Gráfico */
-        .item-aluno { padding: 5px 0; border-bottom: 1px dotted #ccc; font-size: 14px; }
-        .rank-item { margin-bottom: 10px; font-size: 12px; }
-        .barra-bg { background: #eee; height: 10px; border-radius: 5px; overflow: hidden; }
+        .rank-item { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .barra-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 5px; }
         .barra-fill { height: 100%; background: #dc3545; transition: 0.5s; }
+        .hab-tag { font-size: 11px; color: #555; display: block; margin-top: 3px; font-style: italic; }
         .q-mini { display: inline-block; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; border-radius: 3px; font-size: 9px; margin: 1px; }
     </style>
 </head>
@@ -42,47 +40,43 @@
 
 <div class="header-top">
     <div class="turma-selector">
-        <span style="font-weight: bold; font-size: 20px; margin-right: 10px;">Turma:</span>
         <button id="bt8" class="btn-turma ativa" onclick="mudarTurma('8ano')">8º ANO</button>
         <button id="bt9" class="btn-turma" onclick="mudarTurma('9ano')">9º ANO</button>
     </div>
-    <div class="habilidades-box">Habilidades</div>
+    <button class="btn-hab-toggle" onclick="toggleHab()">⚙️ CONFIGURAR HABILIDADES</button>
 </div>
 
-<div class="testes-nav">
-    <button class="btn-teste ativa">1º teste CAED</button>
-    <button class="btn-teste">2º teste CAED</button>
+<div id="painelHab" class="habilidades-panel">
+    <h3>Mapeamento de Habilidades (<span id="habTurma">8º Ano</span>)</h3>
+    <textarea id="temasInput" rows="3" placeholder="Cole aqui as habilidades que eu te enviar..." oninput="salvarConfig()"></textarea>
 </div>
 
 <div class="main-grid">
     <div class="col">
-        <div class="col-title">Alunos</div>
-        <input type="text" id="oficialInput" placeholder="Gabarito Oficial" oninput="salvarConfig()">
-        <input type="text" id="temasInput" placeholder="Temas (Separados por vírgula)" oninput="salvarConfig()">
+        <div class="col-title">Entrada de Dados</div>
+        <input type="text" id="oficialInput" placeholder="Gabarito Oficial (Ex: ABCD...)" oninput="salvarConfig()">
         <hr>
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
+        <input type="text" id="nomeAluno" placeholder="Nome Completo do Aluno">
+        
         <div class="upload-area" onpaste="colarFoto(event)">
-            Clique e Cole a Foto (Ctrl+V)
+            <div id="loading-ocr">⏳ Lendo gabarito...</div>
+            <span>Colar Foto da Prova (Ctrl+V)</span>
             <img id="prevImg">
         </div>
-        <input type="text" id="resAluno" placeholder="Respostas do Aluno">
-        <button class="btn-acao" onclick="salvarAluno()">SALVAR E CORRIGIR</button>
         
+        <input type="text" id="resAluno" placeholder="Respostas (Serão preenchidas automaticamente)">
+        <button class="btn-acao" onclick="salvarAluno()">SALVAR E CORRIGIR</button>
         <div id="listaAlunos" style="margin-top: 15px;"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">Desempenho Geral</div>
+        <div class="col-title">Análise por Habilidade</div>
         <div id="graficoTemas"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">Gráfico de desempenho dos Testes</div>
-        <canvas id="canvasGrafico" style="width: 100%; height: 200px; background: #fdfdfd; border: 1px solid #eee;"></canvas>
-        <div id="legendaGrafico" style="font-size: 11px; margin-top: 10px;">
-            <p>Alunos: 1, 2, 3, 4, 5...</p>
-            <p>Eixo X: CAED1, CAED2...</p>
-        </div>
+        <div class="col-title">Evolução dos Testes</div>
+        <div style="text-align: center; padding: 20px; color: #999;">[ Gráfico CAED ]</div>
     </div>
 </div>
 
@@ -94,6 +88,11 @@
     let turma = '8ano';
     let fotoBase64 = "";
 
+    function toggleHab() {
+        const p = document.getElementById('painelHab');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    }
+
     function mudarTurma(t) {
         turma = t;
         document.getElementById('bt8').className = t === '8ano' ? 'btn-turma ativa' : 'btn-turma';
@@ -101,16 +100,33 @@
         carregarConfig();
     }
 
-    function colarFoto(e) {
+    async function colarFoto(e) {
         const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
         if (item) {
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = async (ev) => {
                 fotoBase64 = ev.target.result;
                 const img = document.getElementById('prevImg');
                 img.src = fotoBase64; img.style.display = "block";
+                
+                // Iniciar Reconhecimento Automático (OCR)
+                document.getElementById('loading-ocr').style.display = "block";
+                await processarOCR(fotoBase64);
             };
             reader.readAsDataURL(item.getAsFile());
+        }
+    }
+
+    async function processarOCR(base64) {
+        try {
+            const result = await Tesseract.recognize(base64, 'eng');
+            // Filtra apenas letras A, B, C, D, E e remove espaços/quebras de linha
+            const textoLimpo = result.data.text.toUpperCase().replace(/[^A-E]/g, '');
+            document.getElementById('resAluno').value = textoLimpo;
+        } catch (error) {
+            console.error("Erro no OCR:", error);
+        } finally {
+            document.getElementById('loading-ocr').style.display = "none";
         }
     }
 
@@ -131,9 +147,8 @@
 
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-E]/g, '');
+        const res = document.getElementById('resAluno').value.toUpperCase();
         if(!nome || !res) return alert("Preencha nome e respostas!");
-        
         db.ref(`prof/v4/${turma}/alunos`).push({ nome, res, foto: fotoBase64 }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
@@ -157,29 +172,32 @@
                 let acertos = 0;
                 let boxes = "";
                 const resA = (a.res || "").replace(/\s/g, '');
-                
                 for(let i=0; i<oficial.length; i++) {
                     const ok = (resA[i] === oficial[i] && oficial[i]);
                     if(ok) acertos++; else errosCont[i+1] = (errosCont[i+1] || 0) + 1;
                     boxes += `<div class="q-mini" style="background:${ok?'#28a745':'#dc3545'};">${i+1}</div>`;
                 }
-                
-                lista.innerHTML += `<div class="item-aluno">
+                lista.innerHTML += `<div style="font-size:13px; margin-bottom:8px; border-bottom:1px solid #f0f0f0;">
                     <strong>${a.nome}</strong> (${acertos}/${oficial.length})
                     <div style="display:flex; flex-wrap:wrap;">${boxes}</div>
                 </div>`;
             });
 
             for(let i=1; i<=oficial.length; i++) {
-                let p = totalA > 0 ? Math.round(((errosCont[i]||0)/totalA)*100) : 0;
-                grafico.innerHTML += `<div class="rank-item">
-                    <span>Q${i}: ${p}% erro - <small>${temasArr[i-1] || '---'}</small></span>
-                    <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
-                </div>`;
+                let pErro = totalA > 0 ? Math.round(((errosCont[i]||0)/totalA)*100) : 0;
+                let pAcerto = 100 - pErro;
+                grafico.innerHTML += `
+                    <div class="rank-item">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
+                            <span>Questão ${i}</span>
+                            <span style="color:#28a745;">${pAcerto}% Acerto</span>
+                        </div>
+                        <span class="hab-tag">Habilidade: ${temasArr[i-1] || 'Não definida'}</span>
+                        <div class="barra-bg"><div class="barra-fill" style="width:${pErro}%;"></div></div>
+                    </div>`;
             }
         });
     }
-
     window.onload = carregarConfig;
 </script>
 </body>

@@ -10,22 +10,24 @@
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
         .header-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 1250px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .turma-selector { display: flex; gap: 8px; border-right: 2px solid #eee; padding-right: 15px; }
-        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; overflow-x: auto; }
+        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; }
         .btn-turma { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 4px; }
         .btn-turma.ativa { background: #333 !important; color: white !important; }
-        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; white-space: nowrap; }
-        .btn-teste.ativa { background: #007bff !important; color: white !important; }
-        .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .del-x { color: #ff4d4d; margin-left: 8px; cursor: pointer; font-weight: bold; }
         
+        /* Cores das Abas Corrigidas */
+        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; position: relative; }
+        .btn-teste.ativa { background: #007bff !important; color: white !important; font-weight: bold; }
+        .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .del-x { color: #ff4d4d; margin-left: 8px; font-weight: bold; }
+
         .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; max-width: 1250px; margin: 0 auto; }
         .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; }
         .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
-        
-        /* Áreas de Colagem Corrigidas */
-        .upload-zone { border: 2px dashed #007bff; padding: 20px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 80px; outline: none; transition: 0.3s; }
+
+        /* Área de Colagem com Foco e Leitura Completa */
+        .upload-zone { border: 2px dashed #007bff; padding: 20px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 80px; outline: none; }
         .upload-zone:focus { border-color: #28a745; background: #f0fff4; }
-        .upload-zone span { pointer-events: none; font-size: 12px; font-weight: bold; color: #007bff; }
+        .upload-zone span { pointer-events: none; font-size: 13px; font-weight: bold; color: #007bff; }
 
         input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; }
@@ -35,7 +37,6 @@
         .item-aluno { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
         .btn-edit { color: #007bff; cursor: pointer; margin-right: 10px; border: none; background: none; text-decoration: underline; }
         .btn-excluir { color: #dc3545; cursor: pointer; border: none; background: none; text-decoration: underline; }
-        #status-info { color: #28a745; font-weight: bold; font-size: 12px; text-align: center; margin-bottom: 5px; height: 15px; }
     </style>
 </head>
 <body>
@@ -49,23 +50,21 @@
     <button class="btn-add" onclick="novoBloco()">+ NOVO BLOCO</button>
 </div>
 
-<div id="status-info"></div>
-
 <div class="main-grid">
     <div class="col">
         <div class="col-title">1. Configuração e Entrada</div>
         
-        <div class="upload-zone" tabindex="0" onpaste="colarIA(event, 'oficialInput')" onclick="this.focus()">
-            <span>CLIQUE AQUI E COLE (Ctrl+V)<br>GABARITO OFICIAL</span>
+        <div class="upload-zone" tabindex="0" onpaste="scannerIA(event, 'oficialInput')" onclick="this.focus()">
+            <span>CLIQUE E COLE O GABARITO OFICIAL (12 Q)</span>
         </div>
-        <input type="text" id="oficialInput" placeholder="Gabarito Mestre" oninput="salvarDB()">
-        <textarea id="temasInput" rows="2" placeholder="Habilidades BNCC (Separadas por vírgula)" oninput="salvarDB()"></textarea>
+        <input type="text" id="oficialInput" placeholder="Gabarito (Ex: DBADABDDA...)" oninput="salvarDB()">
+        <textarea id="temasInput" rows="2" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarDB()"></textarea>
         
         <hr>
         
         <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        <div class="upload-zone" tabindex="0" onpaste="colarIA(event, 'resAluno')" onclick="this.focus()">
-            <span>CLIQUE AQUI E COLE (Ctrl+V)<br>PROVA DO ALUNO</span>
+        <div class="upload-zone" tabindex="0" onpaste="scannerIA(event, 'resAluno')" onclick="this.focus()">
+            <span>CLIQUE E COLE A PROVA DO ALUNO (12 Q)</span>
         </div>
         <input type="text" id="resAluno" placeholder="Respostas Detectadas">
         <button class="btn-acao" onclick="salvarAluno()">✅ SALVAR RESULTADO</button>
@@ -112,21 +111,22 @@
         });
     }
 
-    async function colarIA(e, inputId) {
+    async function scannerIA(e, inputId) {
         e.preventDefault();
         const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
         
         if (item) {
-            document.getElementById('status-info').innerText = "⌛ Lendo imagem... aguarde.";
             const blob = item.getAsFile();
             const reader = new FileReader();
             
             reader.onload = async (ev) => {
-                const result = await Tesseract.recognize(ev.target.result, 'eng');
-                // Limpeza TOTAL de lixo: mantém apenas letras A, B, C, D
-                const textoLimpo = result.data.text.toUpperCase().replace(/[^A-D]/g, '');
+                // Configuração Tesseract para focar em caracteres de prova (A-D)
+                const result = await Tesseract.recognize(ev.target.result, 'eng', {
+                    tessedit_char_whitelist: 'ABCD'
+                });
+                // Remove lixo e limita a leitura a 12 caracteres (tamanho da sua prova)
+                const textoLimpo = result.data.text.toUpperCase().replace(/[^A-D]/g, '').substring(0, 12);
                 document.getElementById(inputId).value = textoLimpo;
-                document.getElementById('status-info').innerText = "✅ Leitura concluída!";
                 if(inputId === 'oficialInput') salvarDB();
             };
             reader.readAsDataURL(blob);
@@ -134,7 +134,7 @@
     }
 
     function salvarDB() {
-        const gab = document.getElementById('oficialInput').value.toUpperCase().replace(/[^A-D]/g, '');
+        const gab = document.getElementById('oficialInput').value.toUpperCase();
         const temas = document.getElementById('temasInput').value;
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/config`).set({ gab, temas });
     }
@@ -166,7 +166,7 @@
     }
 
     function atualizarResultados() {
-        const oficial = document.getElementById('oficialInput').value.trim();
+        const oficial = document.getElementById('oficialInput').value;
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
         
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).on('value', snap => {
@@ -187,8 +187,8 @@
                 <div class="item-aluno">
                     <span><b>${a.nome}</b> (${acertos}/${oficial.length})</span>
                     <div>
-                        <button class="btn-edit" onclick="editarAluno('${child.key}', '${a.nome}', '${a.res}')">Editar</button>
-                        <button class="btn-excluir" onclick="excluirAluno('${child.key}')">Excluir</button>
+                        <span class="btn-edit" onclick="editarAluno('${child.key}', '${a.nome}', '${a.res}')">Editar</span>
+                        <span class="btn-excluir" onclick="excluirAluno('${child.key}')">Excluir</span>
                     </div>
                 </div>`;
             });

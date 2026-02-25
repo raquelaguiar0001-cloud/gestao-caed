@@ -2,8 +2,9 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Scanner Pedagógico | Raquel Aguiar</title>
+    <title>Monitor da Aprendizagem | Raquel Aguiar</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔬</text></svg>">
+    
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
@@ -18,7 +19,7 @@
         .btn-download { border-color: #28a745; color: #28a745; }
         .btn-evolucao { border-color: #6a1b9a; color: #6a1b9a; }
 
-        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; white-space: nowrap; display: flex; align-items: center; }
+        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; white-space: nowrap; }
         .btn-teste.ativa { background: #007bff !important; color: white !important; }
         .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .del-x { color: #ff4d4d; margin-left: 8px; font-weight: bold; }
@@ -30,8 +31,6 @@
         input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: 10px; }
         
-        /* Raio-X */
-        .item-aluno { padding: 12px; border-bottom: 1px solid #eee; }
         .mapa-respostas { display: flex; gap: 3px; margin-top: 8px; flex-wrap: wrap; }
         .q-box { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border-radius: 3px; color: white; }
         .q-acerto { background: #28a745; }
@@ -40,13 +39,12 @@
         .barra-bg { background: #eee; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 4px; }
         .barra-fill { height: 100%; background: #28a745; transition: 0.4s; }
 
-        /* Evolução Alunos */
+        /* Estilo da Evolução Individual */
         #painelEvolucao { display: none; background: white; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 1450px; margin: 0 auto; }
         .selecao-testes { display: flex; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 10px; border-radius: 5px; flex-wrap: wrap; }
         .tabela-ev { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .tabela-ev th, .tabela-ev td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         .tabela-ev th { background: #f4f4f4; }
-        .progresso-texto { font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -64,32 +62,36 @@
 
 <div id="painelEvolucao">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>Desempenho dos Alunos ao Longo dos Testes</h3>
-        <button onclick="trocarTurma(turmaAtual)" style="cursor:pointer">Voltar ✖</button>
+        <h3>📊 Evolução Individual dos Alunos</h3>
+        <button onclick="trocarTurma(turmaAtual)" style="cursor:pointer">Voltar para Testes ✖</button>
     </div>
-    <p style="font-size:13px;">Marque os testes para comparar o percentual de acerto de cada aluno:</p>
+    <p style="font-size:13px;">Selecione os testes para comparar o percentual de acerto de cada aluno:</p>
     <div class="selecao-testes" id="checkTestes"></div>
-    <div id="areaTabelaEvolucao"></div>
+    <div id="areaTabelaEvolucao" style="overflow-x: auto;"></div>
 </div>
 
 <div class="main-grid" id="gridPrincipal">
     <div class="col">
         <div class="col-title">🔬 Entrada de Dados</div>
-        <input type="text" id="oficialInput" placeholder="Gabarito Mestre (12 Questões)" oninput="salvarDB()" maxlength="12">
-        <textarea id="temasInput" rows="3" placeholder="Habilidades (ex: Bio, Fis, Quim...)" oninput="salvarDB()"></textarea>
+        <label style="font-size:11px; font-weight:bold;">GABARITO MESTRE:</label>
+        <input type="text" id="oficialInput" placeholder="Ex: ABCD..." oninput="salvarDB()" maxlength="12">
+        <label style="font-size:11px; font-weight:bold;">HABILIDADES POR QUESTÃO:</label>
+        <textarea id="temasInput" rows="3" placeholder="Tema Q1, Tema Q2..." oninput="salvarDB()"></textarea>
         <hr>
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        <input type="text" id="resAluno" placeholder="Respostas do Aluno" maxlength="12">
+        <label style="font-size:11px; font-weight:bold;">NOME DO ALUNO:</label>
+        <input type="text" id="nomeAluno" placeholder="Nome Completo">
+        <label style="font-size:11px; font-weight:bold;">RESPOSTAS DO ALUNO:</label>
+        <input type="text" id="resAluno" placeholder="Ex: AABB..." maxlength="12">
         <button class="btn-acao" id="btnSalvar" onclick="salvarAluno()">✅ SALVAR RESULTADO</button>
     </div>
 
     <div class="col">
-        <div class="col-title">📉 Desempenho por Questão</div>
+        <div class="col-title">📉 Desempenho da Turma</div>
         <div id="graficoTemas"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">📝 Detalhamento por Aluno</div>
+        <div class="col-title">📝 Raio-X dos Alunos</div>
         <div id="listaAlunos"></div>
     </div>
 </div>
@@ -120,10 +122,7 @@
                 const btn = document.createElement('button');
                 btn.className = `btn-teste ${nome === blocoAtual ? 'ativa' : ''}`;
                 btn.innerHTML = `${nome} <span class="del-x" onclick="deletarBloco('${nome}')">✖</span>`;
-                btn.onclick = (e) => { if(e.target.className !== 'del-x') { 
-                    blocoAtual = nome; 
-                    trocarTurma(turmaAtual);
-                }};
+                btn.onclick = (e) => { if(e.target.className !== 'del-x') { blocoAtual = nome; carregarAbas(); } };
                 nav.appendChild(btn);
             });
             carregarConfig();
@@ -131,7 +130,7 @@
     }
 
     function salvarDB() {
-        const gab = document.getElementById('oficialInput').value.toUpperCase();
+        const gab = document.getElementById('oficialInput').value.toUpperCase().replace(/\s/g, '');
         const temas = document.getElementById('temasInput').value;
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/config`).set({ gab, temas });
     }
@@ -147,8 +146,9 @@
 
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase().trim();
-        const res = document.getElementById('resAluno').value.toUpperCase().trim();
-        if(!nome || !res) return alert("Preencha todos os campos!");
+        const res = document.getElementById('resAluno').value.toUpperCase().replace(/\s/g, '');
+        if(!nome || !res) return alert("Preencha Nome e Respostas!");
+        
         const ref = db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`);
         if(editandoId) {
             ref.child(editandoId).update({ nome, res }).then(() => {
@@ -156,6 +156,7 @@
                 document.getElementById('btnSalvar').innerText = "✅ SALVAR RESULTADO";
             });
         } else { ref.push({ nome, res }); }
+        
         document.getElementById('nomeAluno').value = "";
         document.getElementById('resAluno').value = "";
     }
@@ -163,10 +164,12 @@
     function atualizarResultados() {
         const oficial = document.getElementById('oficialInput').value;
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
+        
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).on('value', snap => {
             const lista = document.getElementById('listaAlunos'), grafico = document.getElementById('graficoTemas');
             lista.innerHTML = ""; grafico.innerHTML = "";
             let acertosPorQ = {}, totalA = snap.numChildren();
+
             snap.forEach(child => {
                 const a = child.val();
                 let acCount = 0;
@@ -177,15 +180,16 @@
                     mapa += `<div class="q-box ${isCorreto ? 'q-acerto' : 'q-erro'}">Q${i+1}</div>`;
                 }
                 mapa += '</div>';
-                lista.innerHTML += `<div class="item-aluno">
+                lista.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee;">
                     <div style="display:flex; justify-content:space-between"><b>${a.nome}</b> <span>${acCount}/12</span></div>
                     ${mapa}
-                    <div style="margin-top:5px; font-size:11px;">
-                        <span style="color:blue; cursor:pointer" onclick="editarAluno('${child.key}','${a.nome}','${a.res}')">Editar</span> | 
-                        <span style="color:red; cursor:pointer" onclick="excluirAluno('${child.key}')">Remover</span>
+                    <div style="margin-top:5px; font-size:11px; color:gray">
+                        <span style="cursor:pointer; text-decoration:underline" onclick="editarAluno('${child.key}','${a.nome}','${a.res}')">Editar</span> | 
+                        <span style="cursor:pointer; text-decoration:underline; color:red" onclick="excluirAluno('${child.key}')">Remover</span>
                     </div>
                 </div>`;
             });
+
             for(let i=1; i <= 12; i++) {
                 let p = totalA > 0 ? Math.round(((acertosPorQ[i]||0)/totalA)*100) : 0;
                 grafico.innerHTML += `<div style="margin-bottom:8px;"><div style="display:flex; justify-content:space-between; font-size:11px;">
@@ -195,7 +199,6 @@
         });
     }
 
-    // --- LÓGICA DE EVOLUÇÃO INDIVIDUAL ---
     async function abrirEvolucao() {
         document.getElementById('gridPrincipal').style.display = 'none';
         document.getElementById('painelEvolucao').style.display = 'block';
@@ -215,9 +218,7 @@
     async function renderizarTabelaEvolucao() {
         const testesSelecionados = Array.from(document.querySelectorAll('#checkTestes input:checked')).map(cb => cb.value);
         const areaTabela = document.getElementById('areaTabelaEvolucao');
-        
-        // Coleta dados de todos os testes selecionados
-        let dadosPorAluno = {}; // { "NOME": { "Teste 1": 80, "Teste 2": 90 } }
+        let dadosPorAluno = {}; 
 
         for (const teste of testesSelecionados) {
             const snapshot = await db.ref(`prof/v4/${turmaAtual}/${teste}`).once('value');
@@ -229,7 +230,6 @@
                 let acertos = 0;
                 for(let i=0; i<oficial.length; i++) if(a.res[i] === oficial[i]) acertos++;
                 let porc = oficial.length > 0 ? Math.round((acertos / oficial.length) * 100) : 0;
-                
                 if(!dadosPorAluno[a.nome]) dadosPorAluno[a.nome] = {};
                 dadosPorAluno[a.nome][teste] = porc;
             });
@@ -248,7 +248,6 @@
             });
             html += `</tr>`;
         });
-
         html += `</tbody></table>`;
         areaTabela.innerHTML = html;
     }
@@ -258,11 +257,10 @@
             const config = snap.child('config').val() || {};
             const alunos = snap.child('alunos').val() || {};
             const oficial = config.gab || "";
-            const dadosExcel = [];
-            Object.values(alunos).forEach(a => {
+            const dadosExcel = Object.values(alunos).map(a => {
                 let acertos = 0;
                 for(let i=0; i<oficial.length; i++) if(a.res[i] === oficial[i]) acertos++;
-                dadosExcel.push({ "Aluno": a.nome, "Acertos": acertos, "Total": oficial.length, "%": ((acertos/oficial.length)*100).toFixed(1)+"%" });
+                return { "Aluno": a.nome, "Acertos": acertos, "%": ((acertos/oficial.length)*100).toFixed(1)+"%" };
             });
             const ws = XLSX.utils.json_to_sheet(dadosExcel);
             const wb = XLSX.utils.book_new();
@@ -275,7 +273,7 @@
         const nome = prompt("Nome do novo bloco:");
         if(nome) db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
             let lista = snap.val() || ["CAED 1"];
-            if(!lista.includes(nome)) { lista.push(nome); db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista); }
+            lista.push(nome); db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
         });
     }
 

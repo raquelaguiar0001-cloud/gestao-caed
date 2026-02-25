@@ -5,73 +5,79 @@
     <title>Scanner Pedagógico | Raquel Aguiar</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
         
-        /* Cabeçalho com Turmas e Blocos */
-        .header-top { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; max-width: 1200px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+        /* Cabeçalho Fixo e Responsivo */
+        .header-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 1250px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .turma-selector { display: flex; gap: 8px; border-right: 2px solid #eee; padding-right: 15px; }
-        .testes-nav { display: flex; gap: 8px; align-items: center; overflow-x: auto; flex-grow: 1; }
+        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; }
         
-        .btn-turma { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        /* Botões Turma */
+        .btn-turma { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; }
         .btn-turma.ativa { background: #333; color: white; }
         
-        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: #f0f7ff; cursor: pointer; font-size: 13px; border-radius: 4px; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-        .btn-teste.ativa { background: #007bff; color: white; }
-        .btn-add { background: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .del-x { color: #ff4d4d; cursor: pointer; font-weight: bold; padding: 0 5px; }
+        /* Botões Blocos (Cores Corrigidas) */
+        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-teste.ativa { background: #007bff !important; color: white !important; font-weight: bold; }
+        .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .del-x { color: #ff4d4d; margin-left: 5px; font-size: 14px; }
 
-        /* Grid Principal conforme o esboço */
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 15px; max-width: 1200px; margin: 0 auto; }
-        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; }
-        .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin-bottom: 15px; padding-bottom: 10px; background: #f9f9f9; margin: -15px -15px 15px -15px; padding: 10px; }
+        /* Grid Principal Mantido */
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; max-width: 1250px; margin: 0 auto; }
+        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
+        .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
 
-        .upload-zone { border: 2px dashed #007bff; padding: 15px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 80px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        /* Áreas de Colagem Restauradas */
+        .upload-zone { border: 2px dashed #007bff; padding: 15px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 90px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #007bff; }
         
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: auto; }
         
-        /* Gráficos de Desempenho */
+        /* Barras de Desempenho */
         .rank-item { margin-bottom: 12px; }
-        .barra-bg { background: #eee; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
-        .barra-fill { height: 100%; background: #28a745; transition: 0.5s; }
-        .item-aluno { padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-size: 14px; }
+        .barra-bg { background: #eee; height: 16px; border-radius: 8px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
+        .barra-fill { height: 100%; background: #28a745; transition: 0.4s ease; }
+        .item-aluno { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .status-ocr { font-size: 10px; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header-top">
     <div class="turma-selector">
-        <button id="bt8" class="btn-turma ativa" onclick="mudarTurma('8ano')">8º ANO</button>
-        <button id="bt9" class="btn-turma" onclick="mudarTurma('9ano')">9º ANO</button>
+        <button id="bt8" class="btn-turma ativa" onclick="trocarTurma('8ano')">8º ANO</button>
+        <button id="bt9" class="btn-turma" onclick="trocarTurma('9ano')">9º ANO</button>
     </div>
-    
     <div class="testes-nav" id="testesNav"></div>
-    
-    <button class="btn-add" onclick="adicionarBloco()">+ NOVO BLOCO</button>
+    <button class="btn-add" onclick="novoBloco()">+ NOVO BLOCO</button>
 </div>
 
 <div class="main-grid">
     <div class="col">
-        <div class="col-title">Alunos e Configuração</div>
-        <input type="text" id="oficialInput" placeholder="Gabarito Oficial (Ex: ABCD...)" oninput="salvarConfig()">
-        <textarea id="temasInput" rows="3" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarConfig()"></textarea>
+        <div class="col-title">1. Alunos e Configuração</div>
+        <div class="upload-zone" onpaste="lerImagem(event, 'oficialInput')">
+            <span>Clique aqui e cole o GABARITO OFICIAL</span>
+        </div>
+        <input type="text" id="oficialInput" placeholder="Gabarito Mestre" oninput="salvarDB()">
+        <textarea id="temasInput" rows="3" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarDB()"></textarea>
         <hr>
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        <div class="upload-zone" id="dropZone">
-            <span>Cole a Prova (Ctrl+V) ou digite as respostas abaixo</span>
+        <input type="text" id="nomeAluno" placeholder="Nome Completo do Aluno">
+        <div class="upload-zone" onpaste="lerImagem(event, 'resAluno')">
+            <span>Clique aqui e cole a PROVA DO ALUNO</span>
         </div>
         <input type="text" id="resAluno" placeholder="Respostas do Aluno">
         <button class="btn-acao" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
     </div>
 
     <div class="col">
-        <div class="col-title">Desempenho Geral</div>
+        <div class="col-title">2. Desempenho Geral</div>
         <div id="graficoTemas"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">Resultados da Turma</div>
+        <div class="col-title">3. Resultados da Turma</div>
         <div id="listaAlunos"></div>
     </div>
 </div>
@@ -81,125 +87,144 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let turma = '8ano';
-    let provaAtiva = 'CAED 1';
+    let turmaAtual = '8ano';
+    let blocoAtual = 'CAED 1';
 
-    function mudarTurma(t) {
-        turma = t;
-        document.getElementById('bt8').className = t === '8ano' ? 'btn-turma ativa' : 'btn-turma';
-        document.getElementById('bt9').className = t === '9ano' ? 'btn-turma ativa' : 'btn-turma';
-        carregarListaBlocos();
+    function trocarTurma(t) {
+        turmaAtual = t;
+        document.querySelectorAll('.btn-turma').forEach(b => b.classList.remove('ativa'));
+        document.getElementById('bt' + t.replace('ano','')).classList.add('ativa');
+        carregarAbas();
     }
 
-    function carregarListaBlocos() {
-        db.ref(`prof/v4/${turma}/provas_lista`).on('value', snap => {
+    function carregarAbas() {
+        db.ref(`prof/v4/${turmaAtual}/provas_lista`).off();
+        db.ref(`prof/v4/${turmaAtual}/provas_lista`).on('value', snap => {
             const nav = document.getElementById('testesNav');
             nav.innerHTML = "";
             let lista = snap.val() || ["CAED 1", "CAED 2"];
             
             lista.forEach(nome => {
-                const btn = document.createElement('div');
-                btn.className = `btn-teste ${nome === provaAtiva ? 'ativa' : ''}`;
-                btn.innerHTML = `<span onclick="selecionarBloco('${nome}')">${nome}</span> 
-                                 <span class="del-x" onclick="excluirBloco('${nome}')">✖</span>`;
+                const btn = document.createElement('button');
+                btn.className = `btn-teste ${nome === blocoAtual ? 'ativa' : ''}`;
+                btn.innerHTML = `${nome} <span class="del-x" onclick="deletarBloco('${nome}')">✖</span>`;
+                btn.onclick = (e) => { 
+                    if(e.target.className !== 'del-x') {
+                        blocoAtual = nome;
+                        carregarAbas(); 
+                        carregarConfig();
+                    }
+                };
                 nav.appendChild(btn);
             });
-            selecionarBloco(provaAtiva || lista[0]);
+            carregarConfig();
         });
     }
 
-    function selecionarBloco(nome) {
-        provaAtiva = nome;
-        carregarConfig();
-    }
-
-    function adicionarBloco() {
-        const nome = prompt("Nome do novo bloco (ex: 1º Bimestre):");
-        if(nome) {
-            db.ref(`prof/v4/${turma}/provas_lista`).once('value', snap => {
-                let lista = snap.val() || ["CAED 1", "CAED 2"];
-                if(!lista.includes(nome)) {
-                    lista.push(nome);
-                    db.ref(`prof/v4/${turma}/provas_lista`).set(lista);
-                }
-            });
+    async function lerImagem(e, inputId) {
+        const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
+        if (item) {
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                // OCR com limpeza de caracteres ? e espaços
+                const result = await Tesseract.recognize(ev.target.result, 'eng');
+                const textoLimpo = result.data.text.toUpperCase().replace(/[^A-D]/g, '');
+                document.getElementById(inputId).value = textoLimpo;
+                if(inputId === 'oficialInput') salvarDB();
+            };
+            reader.readAsDataURL(blob);
         }
     }
 
-    function excluirBloco(nome) {
-        if(confirm(`Excluir o bloco "${nome}"?`)) {
-            db.ref(`prof/v4/${turma}/provas_lista`).once('value', snap => {
-                let lista = snap.val().filter(p => p !== nome);
-                db.ref(`prof/v4/${turma}/provas_lista`).set(lista);
-                db.ref(`prof/v4/${turma}/${nome}`).remove();
-                provaAtiva = lista[0];
-            });
-        }
-    }
-
-    function salvarConfig() {
+    function salvarDB() {
         const gab = document.getElementById('oficialInput').value.toUpperCase().replace(/[^A-D]/g, '');
         const temas = document.getElementById('temasInput').value;
-        db.ref(`prof/v4/${turma}/${provaAtiva}/config`).set({ gab, temas });
+        db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/config`).set({ gab, temas });
     }
 
     function carregarConfig() {
-        db.ref(`prof/v4/${turma}/${provaAtiva}/config`).on('value', snap => {
+        db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/config`).on('value', snap => {
             const d = snap.val() || {};
             document.getElementById('oficialInput').value = d.gab || "";
             document.getElementById('temasInput').value = d.temas || "";
-            ouvirAlunos();
+            atualizarResultados();
         });
     }
 
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase().trim();
         const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-D]/g, '');
-        if(!nome || !res) return alert("Preencha nome e respostas!");
+        if(!nome || !res) return alert("Preencha Nome e Respostas!");
         
-        db.ref(`prof/v4/${turma}/${provaAtiva}/alunos`).push({ nome, res }).then(() => {
+        db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).push({ nome, res }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
         });
     }
 
-    function ouvirAlunos() {
+    function atualizarResultados() {
         const oficial = document.getElementById('oficialInput').value.trim();
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
         
-        db.ref(`prof/v4/${turma}/${provaAtiva}/alunos`).on('value', snap => {
+        db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).on('value', snap => {
             const lista = document.getElementById('listaAlunos');
             const grafico = document.getElementById('graficoTemas');
             lista.innerHTML = ""; grafico.innerHTML = "";
-            let acertosPorQuestao = {}, totalAlunos = snap.numChildren();
+            let acertosPorQ = {}, totalA = snap.numChildren();
 
             snap.forEach(child => {
                 const a = child.val();
                 let acertos = 0;
+                // Comparação exata sem delay
                 for(let i=0; i < oficial.length; i++) {
                     if(a.res[i] === oficial[i] && oficial[i]) {
                         acertos++;
-                        acertosPorQuestao[i+1] = (acertosPorQuestao[i+1] || 0) + 1;
+                        acertosPorQ[i+1] = (acertosPorQ[i+1] || 0) + 1;
                     }
                 }
                 lista.innerHTML += `<div class="item-aluno"><span>${a.nome}</span> <b style="color:#28a745">${acertos}/${oficial.length}</b></div>`;
             });
 
             for(let i=1; i <= oficial.length; i++) {
-                let percAcerto = totalAlunos > 0 ? Math.round(((acertosPorQuestao[i]||0)/totalAlunos)*100) : 0;
+                let pAcerto = totalA > 0 ? Math.round(((acertosPorQ[i]||0)/totalA)*100) : 0;
                 grafico.innerHTML += `
                     <div class="rank-item">
                         <div style="display:flex; justify-content:space-between; font-size:11px;">
                             <span>Q${i}: ${temasArr[i-1] || '---'}</span>
-                            <b>${percAcerto}% acerto</b>
+                            <b>${pAcerto}% acerto</b>
                         </div>
-                        <div class="barra-bg"><div class="barra-fill" style="width:${percAcerto}%"></div></div>
+                        <div class="barra-bg"><div class="barra-fill" style="width:${pAcerto}%"></div></div>
                     </div>`;
             }
         });
     }
 
-    window.onload = () => mudarTurma('8ano');
+    function novoBloco() {
+        const nome = prompt("Nome do novo bloco:");
+        if(nome) {
+            db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
+                let lista = snap.val() || ["CAED 1", "CAED 2"];
+                if(!lista.includes(nome)) {
+                    lista.push(nome);
+                    db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
+                }
+            });
+        }
+    }
+
+    function deletarBloco(nome) {
+        if(confirm(`Excluir bloco "${nome}"?`)) {
+            db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
+                let lista = snap.val().filter(p => p !== nome);
+                db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
+                db.ref(`prof/v4/${turmaAtual}/${nome}`).remove();
+                if(blocoAtual === nome) blocoAtual = lista[0];
+            });
+        }
+    }
+
+    window.onload = () => trocarTurma('8ano');
 </script>
 </body>
 </html>

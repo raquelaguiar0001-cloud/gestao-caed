@@ -5,38 +5,38 @@
     <title>Scanner Pedagógico | Raquel Aguiar</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
-    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
         .header-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 1250px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .turma-selector { display: flex; gap: 8px; border-right: 2px solid #eee; padding-right: 15px; }
-        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; }
+        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; overflow-x: auto; }
         .btn-turma { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 4px; }
         .btn-turma.ativa { background: #333 !important; color: white !important; }
-        
-        /* Cores das Abas Corrigidas */
-        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; position: relative; }
-        .btn-teste.ativa { background: #007bff !important; color: white !important; font-weight: bold; }
+        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; white-space: nowrap; }
+        .btn-teste.ativa { background: #007bff !important; color: white !important; }
         .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .del-x { color: #ff4d4d; margin-left: 8px; font-weight: bold; }
-
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; max-width: 1250px; margin: 0 auto; }
-        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; }
-        .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
-
-        /* Área de Colagem com Foco e Leitura Completa */
-        .upload-zone { border: 2px dashed #007bff; padding: 20px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; min-height: 80px; outline: none; }
-        .upload-zone:focus { border-color: #28a745; background: #f0fff4; }
-        .upload-zone span { pointer-events: none; font-size: 13px; font-weight: bold; color: #007bff; }
-
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; }
         
-        .barra-bg { background: #eee; height: 16px; border-radius: 8px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 15px; max-width: 1350px; margin: 0 auto; }
+        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
+        .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
+        
+        label { font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: auto; }
+        
+        .barra-bg { background: #eee; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
         .barra-fill { height: 100%; background: #28a745; transition: 0.4s; }
-        .item-aluno { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-        .btn-edit { color: #007bff; cursor: pointer; margin-right: 10px; border: none; background: none; text-decoration: underline; }
-        .btn-excluir { color: #dc3545; cursor: pointer; border: none; background: none; text-decoration: underline; }
+        
+        /* Detalhes de Acertos/Erros por Aluno */
+        .item-aluno { padding: 12px; border-bottom: 1px solid #eee; }
+        .aluno-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .mapa-respostas { display: flex; gap: 3px; flex-wrap: wrap; }
+        .q-box { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border-radius: 3px; color: white; }
+        .q-acerto { background: #28a745; }
+        .q-erro { background: #dc3545; }
+        
+        .btn-excluir { color: #dc3545; cursor: pointer; font-size: 11px; text-decoration: underline; border: none; background: none; }
+        .rank-item { margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -54,19 +54,20 @@
     <div class="col">
         <div class="col-title">1. Configuração e Entrada</div>
         
-        <div class="upload-zone" tabindex="0" onpaste="scannerIA(event, 'oficialInput')" onclick="this.focus()">
-            <span>CLIQUE E COLE O GABARITO OFICIAL (12 Q)</span>
-        </div>
-        <input type="text" id="oficialInput" placeholder="Gabarito (Ex: DBADABDDA...)" oninput="salvarDB()">
-        <textarea id="temasInput" rows="2" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarDB()"></textarea>
+        <label>Gabarito Mestre (12 Questões):</label>
+        <input type="text" id="oficialInput" placeholder="Ex: ABCDABCDABCD" oninput="salvarDB()" maxlength="12">
         
-        <hr>
+        <label>Habilidades/Temas (Separe por vírgula):</label>
+        <textarea id="temasInput" rows="4" placeholder="Ex: Ecossistemas, Cadeia Alimentar, Células..." oninput="salvarDB()"></textarea>
         
-        <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        <div class="upload-zone" tabindex="0" onpaste="scannerIA(event, 'resAluno')" onclick="this.focus()">
-            <span>CLIQUE E COLE A PROVA DO ALUNO (12 Q)</span>
-        </div>
-        <input type="text" id="resAluno" placeholder="Respostas Detectadas">
+        <hr style="width:100%; margin: 15px 0;">
+        
+        <label>Nome do Aluno:</label>
+        <input type="text" id="nomeAluno" placeholder="Nome Completo">
+        
+        <label>Respostas do Aluno:</label>
+        <input type="text" id="resAluno" placeholder="Ex: ABCC..." maxlength="12">
+        
         <button class="btn-acao" onclick="salvarAluno()">✅ SALVAR RESULTADO</button>
     </div>
 
@@ -76,7 +77,7 @@
     </div>
 
     <div class="col">
-        <div class="col-title">3. Lista da Turma</div>
+        <div class="col-title">3. Detalhamento por Aluno</div>
         <div id="listaAlunos"></div>
     </div>
 </div>
@@ -86,7 +87,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let turmaAtual = '8ano', blocoAtual = 'CAED 1', editandoId = null;
+    let turmaAtual = '8ano', blocoAtual = 'CAED 1';
 
     function trocarTurma(t) {
         turmaAtual = t;
@@ -103,38 +104,16 @@
             lista.forEach(nome => {
                 const btn = document.createElement('button');
                 btn.className = `btn-teste ${nome === blocoAtual ? 'ativa' : ''}`;
-                btn.innerHTML = `${nome} <span class="del-x" onclick="deletarBloco('${nome}')">✖</span>`;
-                btn.onclick = (e) => { if(e.target.className !== 'del-x') { blocoAtual = nome; carregarAbas(); } };
+                btn.innerText = nome;
+                btn.onclick = () => { blocoAtual = nome; carregarAbas(); };
                 nav.appendChild(btn);
             });
             carregarConfig();
         });
     }
 
-    async function scannerIA(e, inputId) {
-        e.preventDefault();
-        const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
-        
-        if (item) {
-            const blob = item.getAsFile();
-            const reader = new FileReader();
-            
-            reader.onload = async (ev) => {
-                // Configuração Tesseract para focar em caracteres de prova (A-D)
-                const result = await Tesseract.recognize(ev.target.result, 'eng', {
-                    tessedit_char_whitelist: 'ABCD'
-                });
-                // Remove lixo e limita a leitura a 12 caracteres (tamanho da sua prova)
-                const textoLimpo = result.data.text.toUpperCase().replace(/[^A-D]/g, '').substring(0, 12);
-                document.getElementById(inputId).value = textoLimpo;
-                if(inputId === 'oficialInput') salvarDB();
-            };
-            reader.readAsDataURL(blob);
-        }
-    }
-
     function salvarDB() {
-        const gab = document.getElementById('oficialInput').value.toUpperCase();
+        const gab = document.getElementById('oficialInput').value.toUpperCase().trim();
         const temas = document.getElementById('temasInput').value;
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/config`).set({ gab, temas });
     }
@@ -150,17 +129,10 @@
 
     function salvarAluno() {
         const nome = document.getElementById('nomeAluno').value.toUpperCase().trim();
-        const res = document.getElementById('resAluno').value.toUpperCase().replace(/[^A-D]/g, '');
-        if(!nome || !res) return alert("Preencha Nome e Respostas!");
+        const res = document.getElementById('resAluno').value.toUpperCase().trim();
+        if(!nome || !res) return alert("Preencha o nome e as respostas!");
         
-        const ref = db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`);
-        if(editandoId) {
-            ref.child(editandoId).update({ nome, res }).then(() => {
-                editandoId = null;
-                document.querySelector('.btn-acao').innerText = "✅ SALVAR RESULTADO";
-            });
-        } else { ref.push({ nome, res }); }
-        
+        db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).push({ nome, res });
         document.getElementById('nomeAluno').value = "";
         document.getElementById('resAluno').value = "";
     }
@@ -172,34 +144,49 @@
         db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).on('value', snap => {
             const lista = document.getElementById('listaAlunos'), grafico = document.getElementById('graficoTemas');
             lista.innerHTML = ""; grafico.innerHTML = "";
-            let acertosPorQ = {}, totalA = snap.numChildren();
+            let acertosPorQ = {}, totalAlunos = snap.numChildren();
 
             snap.forEach(child => {
                 const a = child.val();
-                let acertos = 0;
-                for(let i=0; i < oficial.length; i++) {
-                    if(a.res[i] === oficial[i] && oficial[i]) {
-                        acertos++;
+                let acertosCount = 0;
+                let mapaHtml = '<div class="mapa-respostas">';
+                
+                // Comparação Questão a Questão
+                for(let i=0; i < 12; i++) {
+                    const letraOficial = oficial[i] || "";
+                    const letraAluno = a.res[i] || "-";
+                    const isCorreto = (letraAluno === letraOficial && letraOficial !== "");
+                    
+                    if(isCorreto) {
+                        acertosCount++;
                         acertosPorQ[i+1] = (acertosPorQ[i+1] || 0) + 1;
+                        mapaHtml += `<div class="q-box q-acerto" title="Q${i+1}: Acertou">Q${i+1}</div>`;
+                    } else {
+                        mapaHtml += `<div class="q-box q-erro" title="Q${i+1}: Errou (Respondeu ${letraAluno})">Q${i+1}</div>`;
                     }
                 }
+                mapaHtml += '</div>';
+
                 lista.innerHTML += `
                 <div class="item-aluno">
-                    <span><b>${a.nome}</b> (${acertos}/${oficial.length})</span>
-                    <div>
-                        <span class="btn-edit" onclick="editarAluno('${child.key}', '${a.nome}', '${a.res}')">Editar</span>
-                        <span class="btn-excluir" onclick="excluirAluno('${child.key}')">Excluir</span>
+                    <div class="aluno-info">
+                        <span><b>${a.nome}</b></span>
+                        <span style="font-size:12px; color:#28a745"><b>${acertosCount}/12</b></span>
+                        <button class="btn-excluir" onclick="excluirAluno('${child.key}')">Remover</button>
                     </div>
+                    ${mapaHtml}
                 </div>`;
             });
 
-            for(let i=1; i <= oficial.length; i++) {
-                let p = totalA > 0 ? Math.round(((acertosPorQ[i]||0)/totalA)*100) : 0;
+            // Gráfico de Habilidades
+            for(let i=1; i <= 12; i++) {
+                let p = totalAlunos > 0 ? Math.round(((acertosPorQ[i]||0)/totalAlunos)*100) : 0;
+                let tema = temasArr[i-1] || `Questão ${i}`;
                 grafico.innerHTML += `
                     <div class="rank-item">
                         <div style="display:flex; justify-content:space-between; font-size:11px;">
-                            <span>Q${i}: ${temasArr[i-1] || '---'}</span>
-                            <b>${p}% acerto</b>
+                            <span><b>${i}.</b> ${tema}</span>
+                            <b>${p}%</b>
                         </div>
                         <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
                     </div>`;
@@ -207,33 +194,21 @@
         });
     }
 
-    function editarAluno(id, nome, res) {
-        editandoId = id;
-        document.getElementById('nomeAluno').value = nome;
-        document.getElementById('resAluno').value = res;
-        document.querySelector('.btn-acao').innerText = "💾 ATUALIZAR ALUNO";
-    }
-
     function excluirAluno(id) {
-        if(confirm("Excluir este aluno?")) db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).child(id).remove();
-    }
-
-    function novoBloco() {
-        const nome = prompt("Nome do bloco:");
-        if(nome) {
-            db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
-                let lista = snap.val() || ["CAED 1"];
-                if(!lista.includes(nome)) { lista.push(nome); db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista); }
-            });
+        if(confirm("Deseja remover este aluno?")) {
+            db.ref(`prof/v4/${turmaAtual}/${blocoAtual}/alunos`).child(id).remove();
         }
     }
 
-    function deletarBloco(nome) {
-        if(confirm(`Excluir "${nome}"?`)) {
+    function novoBloco() {
+        const nome = prompt("Nome do novo bloco (Ex: CAED 2, Simulado):");
+        if(nome) {
             db.ref(`prof/v4/${turmaAtual}/provas_lista`).once('value', snap => {
-                let lista = snap.val().filter(p => p !== nome);
-                db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
-                db.ref(`prof/v4/${turmaAtual}/${nome}`).remove();
+                let lista = snap.val() || ["CAED 1"];
+                if(!lista.includes(nome)) {
+                    lista.push(nome);
+                    db.ref(`prof/v4/${turmaAtual}/provas_lista`).set(lista);
+                }
             });
         }
     }

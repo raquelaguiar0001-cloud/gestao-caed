@@ -16,16 +16,17 @@
         .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; }
         .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin-bottom: 15px; padding-bottom: 5px; }
 
-        .upload-zone { border: 2px dashed #007bff; padding: 15px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; position: relative; }
-        .upload-zone canvas { max-width: 100%; display: none; margin-top: 10px; }
+        .upload-zone { border: 2px dashed #007bff; padding: 15px; text-align: center; cursor: pointer; background: #f8fbff; margin-bottom: 10px; }
+        canvas { max-width: 100%; display: none; margin-top: 10px; border: 1px solid #ccc; }
         
         input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; }
         
-        .rank-item { margin-bottom: 12px; }
-        .barra-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; }
-        .barra-fill { height: 100%; background: #dc3545; transition: 0.5s; }
-        .item-aluno { padding: 8px; border-bottom: 1px solid #eee; font-size: 14px; }
+        /* Ajuste Visual da Coluna 3 para não cortar dados */
+        .rank-item { margin-bottom: 12px; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px; }
+        .barra-bg { background: #eee; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
+        .barra-fill { height: 100%; background: #28a745; transition: 0.5s; } /* Corrigido para Verde como padrão de acerto */
+        .erro-fill { background: #dc3545 !important; } /* Vermelho para erro */
     </style>
 </head>
 <body>
@@ -41,22 +42,20 @@
 <div class="main-grid">
     <div class="col">
         <div class="col-title">1. Configuração do Teste</div>
-        <div class="upload-zone" onpaste="colarImagem(event, 'canvasOficial', 'oficialInput')">
-            <span>Cole o Gabarito Oficial</span>
-            <canvas id="canvasOficial"></canvas>
+        <div class="upload-zone" onpaste="colarManual(event, 'oficialInput')">
+            <span>Cole a imagem do Gabarito Oficial</span>
         </div>
-        <input type="text" id="oficialInput" placeholder="Gabarito (Ex: DBADABDDA...)" oninput="salvarConfig()">
-        <textarea id="temasInput" rows="4" placeholder="Habilidades (Separadas por vírgula)" oninput="salvarConfig()"></textarea>
+        <input type="text" id="oficialInput" placeholder="Gabarito Mestre (Ex: DBADABDDA...)" oninput="salvarConfig()">
+        <textarea id="temasInput" rows="4" placeholder="Habilidades BNCC (Separadas por vírgula)" oninput="salvarConfig()"></textarea>
     </div>
 
     <div class="col">
         <div class="col-title">2. Escaneamento do Aluno</div>
         <input type="text" id="nomeAluno" placeholder="Nome do Aluno">
-        <div class="upload-zone" onpaste="colarImagem(event, 'canvasAluno', 'resAluno')">
+        <div class="upload-zone" onpaste="colarManual(event, 'resAluno')">
             <span>Cole a Prova do Aluno</span>
-            <canvas id="canvasAluno"></canvas>
         </div>
-        <input type="text" id="resAluno" placeholder="Respostas Detectadas">
+        <input type="text" id="resAluno" placeholder="Respostas do Aluno">
         <button class="btn-acao" onclick="salvarAluno()">✅ CORRIGIR E SALVAR</button>
     </div>
 
@@ -75,53 +74,14 @@
 
     let turma = '8ano', provaAtiva = 'CAED 1';
 
-    // Mapeamento de Coordenadas para o formato da imagem (Grade de 12 questões)
-    const coordenadas = [
-        { q: 1, options: [{l:'A', x:95}, {l:'B', x:115}, {l:'C', x:135}, {l:'D', x:155}], y: 410 },
-        { q: 2, options: [{l:'A', x:95}, {l:'B', x:115}, {l:'C', x:135}, {l:'D', x:155}], y: 440 }
-        // ... as demais coordenadas são calculadas dinamicamente abaixo
-    ];
-
-    async function colarImagem(e, canvasId, inputId) {
-        const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
-        if (item) {
-            const blob = item.getAsFile();
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.getElementById(canvasId);
-                const ctx = canvas.getContext('2d');
-                canvas.width = 600; canvas.height = 800; // Normaliza tamanho
-                canvas.style.display = "block";
-                ctx.drawImage(img, 0, 0, 600, 800);
-                
-                // Analisa os pixels nas posições das bolinhas
-                detectarRespostas(ctx, inputId);
-            };
-            img.src = URL.createObjectURL(blob);
+    // Função simples de colagem para evitar erros de OCR
+    function colarManual(e, inputId) {
+        const text = e.clipboardData.getData('text');
+        if (text) {
+            document.getElementById(inputId).value = text.toUpperCase().replace(/[^A-D]/g, '');
+        } else {
+            alert("Por favor, certifique-se de copiar o texto das respostas ou digitar manualmente para evitar erros de leitura visual até a calibração final.");
         }
-    }
-
-    function detectarRespostas(ctx, inputId) {
-        let resultado = "";
-        // Lógica simplificada: verifica o nível de "escuridão" em pontos da grade
-        // Para 12 questões no formato da imagem enviada
-        for(let q=0; q<12; q++) {
-            let melhorOpcao = "?";
-            let minLuz = 255;
-            
-            // Simulação de busca nas colunas A, B, C, D
-            ['A','B','C','D'].forEach((letra, idx) => {
-                const x = 100 + (idx * 30); // Ajuste fino baseado na sua imagem
-                const y = 400 + (Math.floor(q/2) * 40); // Ajuste vertical
-                const pixel = ctx.getImageData(x, y, 1, 1).data;
-                const luz = (pixel[0] + pixel[1] + pixel[2]) / 3;
-                
-                if(luz < minLuz) { minLuz = luz; melhorOpcao = letra; }
-            });
-            resultado += melhorOpcao;
-        }
-        document.getElementById(inputId).value = resultado;
-        salvarConfig();
     }
 
     function mudarTurma(t) {
@@ -132,7 +92,7 @@
     }
 
     function salvarConfig() {
-        const gab = document.getElementById('oficialInput').value.toUpperCase();
+        const gab = document.getElementById('oficialInput').value.toUpperCase().trim();
         const temas = document.getElementById('temasInput').value;
         db.ref(`prof/v4/${turma}/${provaAtiva}/config`).set({ gab, temas });
     }
@@ -147,18 +107,25 @@
     }
 
     function salvarAluno() {
-        const nome = document.getElementById('nomeAluno').value.toUpperCase();
-        const res = document.getElementById('resAluno').value.toUpperCase();
-        if(!nome || !res) return alert("Preencha os campos!");
-        db.ref(`prof/v4/${turma}/${provaAtiva}/alunos`).push({ nome, res }).then(() => {
+        const nome = document.getElementById('nomeAluno').value.toUpperCase().trim();
+        const res = document.getElementById('resAluno').value.toUpperCase().trim();
+        const oficial = document.getElementById('oficialInput').value.toUpperCase().trim();
+
+        if(!nome || !res || !oficial) return alert("Preencha Nome, Respostas do Aluno e Gabarito Oficial!");
+        
+        // Proteção: Garante que estamos comparando apenas o número de questões existentes
+        const resFinal = res.substring(0, oficial.length);
+
+        db.ref(`prof/v4/${turma}/${provaAtiva}/alunos`).push({ nome, res: resFinal }).then(() => {
             document.getElementById('nomeAluno').value = "";
             document.getElementById('resAluno').value = "";
         });
     }
 
     function ouvirAlunos() {
-        const oficial = document.getElementById('oficialInput').value;
+        const oficial = document.getElementById('oficialInput').value.trim();
         const temasArr = document.getElementById('temasInput').value.split(',').map(s => s.trim());
+        
         db.ref(`prof/v4/${turma}/${provaAtiva}/alunos`).on('value', snap => {
             const lista = document.getElementById('listaAlunos');
             const grafico = document.getElementById('graficoTemas');
@@ -168,18 +135,31 @@
             snap.forEach(child => {
                 const a = child.val();
                 let acertos = 0;
-                for(let i=0; i<oficial.length; i++) {
-                    if(a.res[i] === oficial[i]) acertos++; else errosCont[i+1] = (errosCont[i+1] || 0) + 1;
+                // CORREÇÃO DA LÓGICA DE COMPARAÇÃO
+                for(let i=0; i < oficial.length; i++) {
+                    if(a.res[i] === oficial[i] && oficial[i] !== undefined) {
+                        acertos++; 
+                    } else {
+                        errosCont[i+1] = (errosCont[i+1] || 0) + 1;
+                    }
                 }
-                lista.innerHTML += `<div class="item-aluno"><strong>${a.nome}</strong>: ${acertos}/${oficial.length}</div>`;
+                lista.innerHTML += `<div class="item-aluno"><strong>${a.nome}</strong>: <span style="color:#28a745">${acertos}/${oficial.length} ACERTOS</span></div>`;
             });
 
-            for(let i=1; i<=oficial.length; i++) {
-                let p = totalA > 0 ? Math.round(((errosCont[i]||0)/totalA)*100) : 0;
+            // Geração do Gráfico de Desempenho (Verde para acertos, Barra Cresce conforme erro)
+            for(let i=1; i <= oficial.length; i++) {
+                let percErro = totalA > 0 ? Math.round(((errosCont[i]||0)/totalA)*100) : 0;
+                let percAcerto = 100 - percErro;
+                
                 grafico.innerHTML += `
                     <div class="rank-item">
-                        <small>Q${i}: ${temasArr[i-1] || 'Sem tema'}</small>
-                        <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px;">
+                            <span>Q${i}: ${temasArr[i-1] || 'Habilidade não definida'}</span>
+                            <b>${percAcerto}% acerto</b>
+                        </div>
+                        <div class="barra-bg">
+                            <div class="barra-fill" style="width:${percAcerto}%"></div>
+                        </div>
                     </div>`;
             }
         });

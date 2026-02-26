@@ -10,46 +10,201 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #333; }
-        
-        /* Menu Superior */
-        .header-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 1400px; margin: 0 auto 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #333; }
-        .turma-selector { display: flex; gap: 8px; border-right: 2px solid #eee; padding-right: 15px; }
-        .testes-nav { display: flex; gap: 8px; align-items: center; flex-grow: 1; overflow-x: auto; }
-        
-        .btn-turma, .btn-evolucao, .btn-download { padding: 8px 15px; border: 1px solid #333; background: white; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        .btn-turma.ativa, .btn-evolucao.ativa { background: #333 !important; color: white !important; }
-        .btn-download { border-color: #28a745; color: #28a745; }
-        .btn-evolucao { border-color: #6a1b9a; color: #6a1b9a; }
+        /* --- DESIGN ATUALIZADO (MODERNO/PROFISSIONAL) --- */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
 
-        .btn-teste { padding: 8px 12px; border: 1px solid #007bff; background: white; color: #007bff; cursor: pointer; font-size: 13px; border-radius: 4px; white-space: nowrap; }
-        .btn-teste.ativa { background: #007bff !important; color: white !important; font-weight: bold; }
-        .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .del-x { color: #ff4d4d; margin-left: 8px; font-weight: bold; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg); 
+            padding: 20px; 
+            color: var(--text);
+            margin: 0;
+        }
+        
+        /* Menu Superior Estilizado */
+        .header-top { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 12px; 
+            align-items: center; 
+            max-width: 1400px; 
+            margin: 0 auto 25px; 
+            background: var(--card-bg); 
+            padding: 12px 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .turma-selector { 
+            display: flex; 
+            gap: 10px; 
+            border-right: 1px solid #e2e8f0; 
+            padding-right: 15px; 
+        }
+
+        .testes-nav { 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+            flex-grow: 1; 
+            overflow-x: auto; 
+            padding: 5px 0;
+        }
+        
+        /* Botões Estilizados */
+        .btn-turma, .btn-evolucao, .btn-download, .btn-teste { 
+            padding: 10px 18px; 
+            border: 1px solid #e2e8f0; 
+            background: white; 
+            cursor: pointer; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            font-size: 13px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-turma:hover, .btn-teste:hover { border-color: var(--primary); color: var(--primary); }
+
+        .btn-turma.ativa, .btn-teste.ativa { 
+            background: var(--primary) !important; 
+            color: white !important; 
+            border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-download { color: var(--success); border-color: var(--success); }
+        .btn-download:hover { background: var(--success); color: white; }
+
+        .btn-evolucao { color: #7c3aed; border-color: #7c3aed; }
+        .btn-evolucao:hover { background: #7c3aed; color: white; }
+        .btn-evolucao.ativa { background: #7c3aed !important; color: white !important; }
+
+        .btn-add { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-add:hover { background: var(--primary-dark); }
+
+        .del-x { color: var(--danger); margin-left: 10px; font-weight: bold; opacity: 0.6; }
+        .del-x:hover { opacity: 1; }
 
         /* Grade Principal */
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 15px; max-width: 1500px; margin: 0 auto; }
-        .col { background: white; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
-        .col-title { font-weight: bold; text-align: center; border-bottom: 1px solid #eee; margin: -15px -15px 15px -15px; padding: 12px; background: #f9f9f9; }
-        
-        label { font-size: 11px; font-weight: bold; margin-top: 10px; display: block; }
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-acao { background: #28a745; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 16px; margin-top: auto; }
-        
-        /* Raio-X de Questões */
-        .mapa-respostas { display: flex; gap: 3px; margin-top: 8px; flex-wrap: wrap; }
-        .q-box { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; border-radius: 3px; color: white; }
-        .q-acerto { background: #28a745; }
-        .q-erro { background: #dc3545; }
-        
-        .barra-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #ddd; }
-        .barra-fill { height: 100%; background: #28a745; transition: 0.4s; }
+        .main-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1.3fr; 
+            gap: 20px; 
+            max-width: 1500px; 
+            margin: 0 auto; 
+        }
 
-        /* Painel de Evolução */
-        #painelEvolucao { display: none; background: white; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 1500px; margin: 0 auto; }
-        .tabela-ev { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .tabela-ev th, .tabela-ev td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; }
-        .tabela-ev th { background: #f4f4f4; }
+        .col { 
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .col-title { 
+            font-weight: 700; 
+            text-align: left; 
+            margin-bottom: 20px; 
+            padding-bottom: 12px; 
+            border-bottom: 2px solid #f1f5f9;
+            font-size: 16px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        label { font-size: 12px; font-weight: 600; margin-top: 12px; display: block; color: var(--secondary); margin-bottom: 4px; }
+        input, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 14px;
+            background: #fcfcfc;
+        }
+        input:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+        .btn-acao { 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            width: 100%; 
+            cursor: pointer; 
+            font-weight: bold; 
+            border-radius: 10px; 
+            font-size: 15px; 
+            margin-top: 15px; 
+            transition: 0.3s;
+        }
+        .btn-acao:hover { filter: brightness(0.9); transform: translateY(-1px); }
+        
+        /* Raio-X e Listas */
+        .item-aluno {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: 0.2s;
+        }
+        .item-aluno:hover { background: #f8fafc; }
+
+        .mapa-respostas { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+        .q-box { 
+            width: 22px; 
+            height: 22px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 10px; 
+            font-weight: 800; 
+            border-radius: 4px; 
+            color: white; 
+        }
+        .q-acerto { background: var(--success); }
+        .q-erro { background: var(--danger); }
+        
+        .barra-bg { background: #e2e8f0; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .barra-fill { height: 100%; background: var(--primary); border-radius: 10px; }
+
+        /* Painel Evolução */
+        #painelEvolucao { 
+            display: none; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            max-width: 1500px; 
+            margin: 0 auto; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .tabela-ev { width: 100%; border-collapse: collapse; margin-top: 15px; border-radius: 8px; overflow: hidden; }
+        .tabela-ev th { background: #f8fafc; color: var(--secondary); font-weight: 600; border: 1px solid #e2e8f0; padding: 12px; }
+        .tabela-ev td { border: 1px solid #e2e8f0; padding: 12px; text-align: center; }
+
+        hr { border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -67,18 +222,18 @@
 
 <div id="painelEvolucao">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>📊 Evolução Individual por Aluno</h3>
-        <button onclick="trocarTurma(turmaAtual)" style="cursor:pointer; border:1px solid #333; background: #eee; padding:5px 10px; border-radius:4px;">Voltar para Testes ✖</button>
+        <h3 style="margin:0">📊 Evolução Individual por Aluno</h3>
+        <button onclick="trocarTurma(turmaAtual)" style="cursor:pointer; border:1px solid #e2e8f0; background: #fff; padding:8px 15px; border-radius:8px; font-weight:bold;">Voltar para Testes ✖</button>
     </div>
-    <p style="font-size:13px;">Selecione os testes para comparar:</p>
-    <div id="checkTestes" style="margin-bottom:15px; display:flex; gap:15px; flex-wrap:wrap; background:#f9f9f9; padding:10px; border-radius:5px;"></div>
+    <p style="font-size:13px; color:#64748b">Selecione os testes para comparar:</p>
+    <div id="checkTestes" style="margin-bottom:20px; display:flex; gap:15px; flex-wrap:wrap; background:#f8fafc; padding:15px; border-radius:10px; border: 1px solid #f1f5f9;"></div>
     <div id="areaTabelaEvolucao" style="overflow-x: auto;"></div>
 </div>
 
 <div class="main-grid" id="gridPrincipal">
     <div class="col">
-        <div class="col-title">🔬 Entrada de Dados</div>
-        <label>GABARITO MESTRE (O sistema adapta o total de questões automaticamente):</label>
+        <div class="col-title">🧪 Configuração e Entrada</div>
+        <label>GABARITO MESTRE:</label>
         <input type="text" id="oficialInput" placeholder="Ex: ABCDABCD..." oninput="salvarDB()">
         <label>TEMAS DAS QUESTÕES (Separe por vírgula):</label>
         <textarea id="temasInput" rows="3" placeholder="Tema 1, Tema 2..." oninput="salvarDB()"></textarea>
@@ -91,17 +246,18 @@
     </div>
 
     <div class="col">
-        <div class="col-title">📉 Desempenho da Turma</div>
+        <div class="col-title">📊 Desempenho da Turma</div>
         <div id="graficoTemas"></div>
     </div>
 
     <div class="col">
-        <div class="col-title">📝 Raio-X Individual</div>
+        <div class="col-title">📋 Raio-X Individual</div>
         <div id="listaAlunos"></div>
     </div>
 </div>
 
 <script>
+    // --- LÓGICA DE DADOS INTEGRALMENTE PRESERVADA ---
     const firebaseConfig = { databaseURL: "https://gestao-caed-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -185,19 +341,19 @@
                 }
                 mapa += '</div>';
                 lista.innerHTML += `<div class="item-aluno">
-                    <div style="display:flex; justify-content:space-between"><b>${a.nome}</b> <span>${acCount}/${totalQ}</span></div>
+                    <div style="display:flex; justify-content:space-between"><b>${a.nome}</b> <span style="font-weight:bold; color:var(--primary)">${acCount}/${totalQ}</span></div>
                     ${mapa}
-                    <div style="margin-top:5px; font-size:11px;">
-                        <span style="color:blue; cursor:pointer" onclick="editarAluno('${child.key}','${a.nome}','${a.res}')">Editar</span> | 
-                        <span style="color:red; cursor:pointer" onclick="excluirAluno('${child.key}')">Remover</span>
+                    <div style="margin-top:8px; font-size:11px;">
+                        <span style="color:var(--primary); cursor:pointer; font-weight:600" onclick="editarAluno('${child.key}','${a.nome}','${a.res}')">✏️ Editar</span> &nbsp;&nbsp; 
+                        <span style="color:var(--danger); cursor:pointer; font-weight:600" onclick="excluirAluno('${child.key}')">🗑️ Remover</span>
                     </div>
                 </div>`;
             });
 
             for(let i=1; i <= totalQ; i++) {
                 let p = totalA > 0 ? Math.round(((acertosPorQ[i]||0)/totalA)*100) : 0;
-                grafico.innerHTML += `<div style="margin-bottom:8px;"><div style="display:flex; justify-content:space-between; font-size:11px;">
-                    <span><b>${i}.</b> ${temasArr[i-1] || '---'}</span><b>${p}%</b></div>
+                grafico.innerHTML += `<div style="margin-bottom:12px;"><div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;">
+                    <span><b style="color:var(--primary)">${i}.</b> ${temasArr[i-1] || '---'}</span><b>${p}%</b></div>
                     <div class="barra-bg"><div class="barra-fill" style="width:${p}%"></div></div></div>`;
             }
         });
@@ -212,7 +368,7 @@
             const area = document.getElementById('checkTestes');
             area.innerHTML = "";
             (snap.val() || []).forEach(nome => {
-                area.innerHTML += `<label style="cursor:pointer"><input type="checkbox" checked value="${nome}" onchange="renderizarTabelaEvolucao()"> ${nome}</label>`;
+                area.innerHTML += `<label style="cursor:pointer; display:flex; align-items:center; gap:5px; background:white; padding:5px 10px; border-radius:6px; border:1px solid #e2e8f0;"><input type="checkbox" checked value="${nome}" onchange="renderizarTabelaEvolucao()"> ${nome}</label>`;
             });
             renderizarTabelaEvolucao();
         });
@@ -243,7 +399,7 @@
             html += `<tr><td style="text-align:left"><b>${nome}</b></td>`;
             selecionados.forEach(t => {
                 let nota = dadosAlunos[nome][t];
-                let cor = nota >= 60 ? "#28a745" : "#dc3545";
+                let cor = nota >= 60 ? "#16a34a" : "#dc2626";
                 html += `<td style="color:${cor}; font-weight:bold">${nota !== undefined ? nota + '%' : '-'}</td>`;
             });
             html += `</tr>`;
